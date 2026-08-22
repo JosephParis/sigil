@@ -4,7 +4,7 @@ title: "Nine session-artifact markdown files cluttering the repo root"
 priority: P4
 area: hygiene
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -71,7 +71,45 @@ LICENSE, and the three live design docs.
 
 ## Acceptance criteria
 
-- [ ] All nine moved to `docs/archive/` with an explanatory README
-- [ ] Any still-live setup or test-running instructions folded into the main README first
-- [ ] Repo root contains only README, LICENSE, and current design docs
-- [ ] No file in the root claims completion of work that is still outstanding
+- [x] All nine moved to `docs/archive/` with an explanatory README
+- [x] Any still-live setup or test-running instructions folded into the main README first
+- [x] Repo root contains only README, LICENSE, and current design docs
+- [x] No file in the root claims completion of work that is still outstanding
+
+## Resolution
+
+Landed on `dawn/2026-08-22`, after issue 20, so the README existed to fold
+anything live into.
+
+All nine moved to `docs/archive/` with a README that states plainly that nothing
+in there is current documentation, tabulates what each file was, and points at
+where the live docs are.
+
+**Nothing needed folding into the README first.** Each was checked:
+
+- `CI_SETUP_CHECKLIST.md` / `GITHUB_ACTIONS_SETUP.md` describe GitHub Actions
+  setup generically and reference example secrets (`SLACK_WEBHOOK`, `API_KEY`)
+  this project does not use. `grep secrets. .github/workflows/*.yml` returns
+  nothing — **neither live workflow reads any secret**, so there was no
+  undocumented setup step hiding in them. Noted on issue 24, which is unblocked.
+- `TESTING_MOBILE.md` / `TEST_RESPONSIVE.md` / `PLAYWRIGHT_TESTS_SUMMARY.md`
+  describe running the Playwright suites, now covered by the README script table.
+
+Went slightly further than the nine, per the "consider whether" note: the root
+now holds exactly **README, LICENSE and the three live design docs** (`REWORK.md`,
+`DESIGN.md`, `WINRATE_TARGETS.md`). `EXTENSIONS.md`, `Storyline.md`,
+`MOBILE_UI_IMPROVEMENTS.md` and `RESPONSIVE_AND_PWA_PLAN.md` moved to `docs/` —
+they carry ongoing value, so they are not archived, just off the root.
+
+That last one is the judgement call worth flagging: this issue lists
+`RESPONSIVE_AND_PWA_PLAN.md` among the files with ongoing value, and it is still
+issue 04's reference. It moved to `docs/` rather than `docs/archive/` for exactly
+that reason, but it did have to leave the root for the "only README, LICENSE and
+the three live design docs" criterion to hold.
+
+Inbound references updated: `README.md`'s documentation map, `REWORK.md:7`, and
+the `RESPONSIVE_AND_PWA_PLAN.md` paths in issue 04.
+
+No file left in the root claims completion of outstanding work — the two that did
+(`MOBILE_OPTIMIZATION_COMPLETE.md`, `RESPONSIVE_CHANGES_SUMMARY.md`) are archived
+and explicitly flagged in the archive README.

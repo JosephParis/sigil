@@ -64,7 +64,7 @@ image resolves, is `image/png`, and its real IHDR dimensions match the declared
 
 ### Not done
 
-- **No service worker**, so no offline play. Deliberate: `RESPONSIVE_AND_PWA_PLAN.md`
+- **No service worker**, so no offline play. Deliberate: `docs/RESPONSIVE_AND_PWA_PLAN.md`
   treats it as separate, it is a much larger change, and installability does not
   need it. The manifest alone gets "Add to Home screen".
 - **The share image text is rendered with a system serif**, not Cinzel. The PNG is
@@ -86,7 +86,7 @@ module script. Consequences:
 ## Evidence
 
 - `index.html` — 379 bytes total.
-- `RESPONSIVE_AND_PWA_PLAN.md` — Part 1 (responsive) partially landed; **Part 2
+- `docs/RESPONSIVE_AND_PWA_PLAN.md` — Part 1 (responsive) partially landed; **Part 2
   (manifest, icon set, install prompt) was never implemented.** That document is
   the spec for this issue.
 
@@ -98,7 +98,7 @@ win available.
 
 ## Suggested fix
 
-Follow Part 2 of `RESPONSIVE_AND_PWA_PLAN.md`:
+Follow Part 2 of `docs/RESPONSIVE_AND_PWA_PLAN.md`:
 
 - Generate an icon set from the game's visual language (the rune/sigil motif in
   `src/index.css` is the obvious source). Minimum: `favicon.svg`,

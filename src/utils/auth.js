@@ -2,14 +2,14 @@
  * Google Authentication utility for Scoundrel.
  *
  * Uses Google Identity Services (GIS) loaded via CDN by the LoginModal.
- * Requires VITE_GOOGLE_CLIENT_ID to be set in your .env file:
+ * Requires VITE_GOOGLE_CLIENT_ID to be set in your .env.local file:
  *   VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
  *
  * To set up:
  * 1. Go to https://console.cloud.google.com/
  * 2. Create a project → APIs & Services → Credentials → OAuth 2.0 Client ID
  * 3. Set Authorized JavaScript origins to your domain (e.g. http://localhost:5173)
- * 4. Copy the Client ID into your .env file
+ * 4. Copy the Client ID into your .env.local file
  */
 
 const STORAGE_KEY = 'scoundrel:user'
@@ -70,7 +70,7 @@ export function initGoogleSignIn(buttonEl, onSuccess, onError) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
   if (!clientId) {
-    onError('Google Client ID not configured. Set VITE_GOOGLE_CLIENT_ID in your .env file.')
+    onError('Google Client ID not configured. Set VITE_GOOGLE_CLIENT_ID in your .env.local file.')
     return
   }
 

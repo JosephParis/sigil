@@ -26,9 +26,16 @@ dist-ssr
 # Claude agent internals
 .claude/
 
+# Unattended dawn-run report. Written to the worktree root each run and read off
+# disk by the launcher for the PR body -- it is a report *about* a run, not part
+# of the project, so it must never be committed (see issue 22).
+DAWN-SUMMARY.md
+
 .vercel
 
-.env.local
+.env
+.env.*
+!.env.example
 
 # Playwright visual-review output (the harness config + spec are tracked,
 # but generated screenshots/results are not)

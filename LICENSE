@@ -1,0 +1,61 @@
+MIT License
+
+Copyright (c) 2026 Joseph Paris
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+================================================================================
+Third-party assets
+================================================================================
+
+The MIT grant above covers the SOURCE CODE of this repository. Several bundled
+assets are third-party works under their own terms, which travel with the files
+and are not relicensed by this file.
+
+MUSIC — Creative Commons Attribution 3.0 (CC BY 3.0)
+    The two looping tracks in `public/audio/music/` are by Kevin MacLeod
+    (incompetech.com), licensed CC BY 3.0:
+    https://creativecommons.org/licenses/by/3.0/
+
+    CC BY requires ATTRIBUTION. If you redistribute this project, or reuse these
+    files anywhere else, you must credit Kevin MacLeod. The attribution as
+    shipped lives in `public/audio/music/CREDITS.md`; keep it, and keep it
+    reachable by players.
+
+    Per-track detail, including album and ISRC, is in that CREDITS.md.
+
+BELL CUES — public domain
+    The one-shot cues are derived from public-domain bell recordings by
+    `scripts/build-bell-cues.sh`, which downloads the sources and does the
+    editing itself, so provenance is reproducible rather than asserted. See
+    `public/audio/music/CREDITS.md`.
+
+FONTS
+    Currently loaded from Google Fonts at runtime and not redistributed here, so
+    no font files in this repo carry a license. Issue 18 proposes self-hosting
+    them; if that lands, the fonts arrive under the SIL Open Font License and
+    their OFL text must be vendored alongside the files and noted here.
+
+GAME DESIGN
+    The original single-deck card game "Scoundrel" is by Zach Gage and Kurt
+    Bieg. This project began as an implementation of it and has since diverged
+    substantially (see `REWORK.md`). Game rules and mechanics are not
+    copyrightable subject matter, but the debt is real and worth stating: the
+    core loop here descends from their design.

@@ -4,7 +4,7 @@ title: ".gitignore covers .env.local but not .env"
 priority: P4
 area: security
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -60,7 +60,22 @@ Expected to return nothing.
 
 ## Acceptance criteria
 
-- [ ] `.gitignore` ignores `.env` and all `.env.*` variants
-- [ ] `.env.example` still trackable
-- [ ] `src/utils/auth.js` comment references `.env.local`
-- [ ] `git log --all --full-history -- .env .env.local` returns nothing
+- [x] `.gitignore` ignores `.env` and all `.env.*` variants
+- [x] `.env.example` still trackable
+- [x] `src/utils/auth.js` comment references `.env.local`
+- [x] `git log --all --full-history -- .env .env.local` returns nothing
+
+## Resolution
+
+Fixed on `dawn/2026-08-22`.
+
+`.gitignore` now carries `.env`, `.env.*`, `!.env.example` in place of the single
+`.env.local` line. Verified with `git check-ignore`: `.env`, `.env.production` and
+`.env.local` are ignored, `.env.example` is trackable.
+
+Three comments in `src/utils/auth.js` pointed at `.env` (lines 5, 12 and the
+user-facing error on line 73). All three now say `.env.local`, matching Vite's
+convention and the ignore rules.
+
+`git log --all --full-history -- .env .env.local` returns nothing, so no secret
+has ever been committed. This stayed a trap, never an incident — no rotation needed.

@@ -4,7 +4,7 @@ A proposed major rework of the deck model. Nothing here is committed; this is th
 design of record for the direction, capturing the decisions made so far and the
 ones still open.
 
-This doc sits alongside DESIGN.md (the current shape) and EXTENSIONS.md (growth
+This doc sits alongside DESIGN.md (the current shape) and docs/EXTENSIONS.md (growth
 ideas). Where the two conflict with this doc, this doc wins for anything inside
 the rework; everything it does not touch (the run loop, sanctuary, sigils, Boons)
 stays as DESIGN.md describes.

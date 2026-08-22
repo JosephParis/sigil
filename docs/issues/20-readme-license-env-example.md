@@ -4,7 +4,7 @@ title: "No README, LICENSE, or .env.example"
 priority: P4
 area: docs
 effort: M
-status: open
+status: done
 ---
 
 ## Problem
@@ -59,7 +59,49 @@ belongs here too.
 
 ## Acceptance criteria
 
-- [ ] `README.md` covers setup, scripts, all eight env vars, architecture, deployment
-- [ ] `.env.example` lists all eight with the dev-sign-in warning called out
-- [ ] `LICENSE` chosen and added, with third-party asset licenses noted
-- [ ] A clean clone can be brought up from the README alone
+- [x] `README.md` covers setup, scripts, all eight env vars, architecture, deployment
+- [x] `.env.example` lists all eight with the dev-sign-in warning called out
+- [x] `LICENSE` chosen and added, with third-party asset licenses noted
+- [x] A clean clone can be brought up from the README alone
+
+## Resolution
+
+Landed on `dawn/2026-08-22`, after issue 21 (which had to go first, so
+`.env.example` would stay trackable under the broadened ignore rules).
+
+**`README.md`** — what the game is, the og-image as the screenshot, quick start,
+the full script table, the testing convention and its two Playwright traps, the
+eight env vars split build-time vs runtime, architecture (localStorage as source
+of truth with the convergent merge, module layout, feature flags and their
+`?flag-<id>=1` override, `VERSION_HISTORY` / `GAME_VERSION`), deployment, and a
+documentation map that carries the staleness warning on `DESIGN.md` until issue
+23 lands.
+
+Two things the audit did not list, both worth a reader's time:
+
+- **The game needs no environment variables at all to run.** A clean clone is
+  `npm install && npm run dev`; with nothing configured it plays local-only. The
+  env table reads as a prerequisite list otherwise, and it is not one.
+- **`vite dev` and `vite preview` do not serve `/api`.** That is the fact behind
+  issue 13 existing as a production checklist, and it is not obvious from the
+  tree.
+
+**`.env.example`** — all eight, grouped build-time vs runtime, with the
+dev-sign-in warning called out twice (on the variable and in the header). Also
+records that `GOOGLE_CLIENT_ID` must match `VITE_GOOGLE_CLIENT_ID`, since a
+mismatch fails every sign-in, and that rotating `SESSION_SECRET` forces a
+re-sign-in without losing data.
+
+**`LICENSE`** — **MIT**, with a third-party asset section covering the CC BY 3.0
+music (attribution is a redistribution obligation, not a nicety), the
+public-domain bell cues, a placeholder for OFL fonts if issue 18 self-hosts them,
+and a note on the debt to Gage and Bieg's original *Scoundrel*.
+
+### Decision to revisit: MIT
+
+MIT was chosen as the default for a public repo whose value is the game rather
+than the code, and it is the least friction for anyone reading the source. It is
+worth an explicit second look, because it is the one decision here that is hard
+to walk back: it permits commercial redistribution of the game's code. If that is
+not wanted, the alternatives are a source-available license, or MIT on the code
+with assets and content reserved. Nothing else in this issue is contentious.

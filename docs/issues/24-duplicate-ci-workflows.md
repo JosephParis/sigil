@@ -46,6 +46,12 @@ While consolidating:
 Then fold any still-relevant setup notes from `CI_SETUP_CHECKLIST.md` and
 `GITHUB_ACTIONS_SETUP.md` into the README before issue 22 archives them.
 
+**Update (issue 22, 2026-08-22):** both were checked and archived to
+`docs/archive/`. Nothing needed folding in — they describe GitHub Actions setup
+generically and reference example secrets (`SLACK_WEBHOOK`, `API_KEY`) this
+project does not use. Neither `ci.yml` nor `mobile-tests.yml` reads any secret,
+so there is no undocumented setup step hiding in them. This issue is unblocked.
+
 ## Acceptance criteria
 
 - [ ] One workflow file owns the mobile suite; no duplicate runs on a push

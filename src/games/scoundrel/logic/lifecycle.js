@@ -493,7 +493,7 @@ export function endDescentVictory(state) {
 
   // Ascension hooks: themeTierOffset advances the escalation by N sigils so
   // harder themes show up sooner; boonOfferCount caps the offer roll;
-  // forgeSigils swaps the 2/4/6 cadence for the level's set.
+  // forgeSigils swaps the A0 every-return cadence for the level's set.
   //
   // Mode hooks: lockTheme overrides the rolled theme; noBoons skips the
   // offer roll; noForge keeps the forge closed regardless of sigil count.

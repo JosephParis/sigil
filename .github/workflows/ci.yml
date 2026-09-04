@@ -5,6 +5,12 @@ on:
     branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master, develop ]
+  # The full suite is expensive, so it does not run per push on a branch. These
+  # two triggers are how it is reached anyway: nightly, and on demand before a
+  # merge that deserves it (issue 24).
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:
 
 jobs:
   lint-and-build:
@@ -84,14 +90,24 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # Optional: Run all Playwright tests (not just mobile)
+  # Every Playwright project, not just the mobile one.
+  #
+  # DECISION (issue 24, 2026-09-02): this stays off per-push branch builds. It
+  # is ~20 minutes of browser time and the mobile job above already guards the
+  # surface that actually breaks. The gap it leaves -- a PR looking green and
+  # failing on merge -- is closed by the nightly schedule and by
+  # workflow_dispatch, which is the trade the issue proposed. Revisit if a
+  # merge ever breaks something the nightly then catches hours later.
   all-tests:
     name: All Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: lint-and-build
-    # Only run on main branch to save CI minutes
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/master'
 
     steps:
       - name: Checkout code

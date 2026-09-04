@@ -4,7 +4,7 @@ title: "Two docs state things that are no longer true: the schema's table count 
 priority: P4
 area: docs
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -44,6 +44,20 @@ whether launch is blocked.
 
 ## Acceptance criteria
 
-- [ ] `db/schema.sql`'s header lists all six tables with their owning files
-- [ ] The mailbox item is no longer listed as open in the backlog README
-- [ ] Every `create table` under `api/` appears in `db/schema.sql`
+- [x] `db/schema.sql`'s header lists all six tables with their owning files
+- [x] The mailbox item is no longer listed as open in the backlog README
+- [x] Every `create table` under `api/` appears in `db/schema.sql`
+
+## Resolution
+
+Closed on `dawn/2026-09-02`. The header now says "Six tables:" and lists
+`handles` with `api/_lib/handles.js` as its owner; the mailbox item is recorded
+as verified 2026-08-06 rather than listed as open, leaving the 401 check as the
+one non-optional item on issue 13.
+
+The audit found no missing tables: all six `create table if not exists` in
+`api/` are in `db/schema.sql`. Rather than leave that as a fact someone has to
+re-check, `test/designDocs.test.js` now reads the DDL out of every file under
+`api/` and holds `schema.sql` to it — each table described, each one named in
+the header with its owning file, and the spelled-out count matching. The
+miscount that opened this issue would now fail the suite.

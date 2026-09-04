@@ -9,6 +9,7 @@
 // so they remain debuggable when stacked.
 
 import { isEnabled as isFlagEnabled } from './flags'
+import { SIGIL_TARGET } from './constants'
 
 export const ASCENSIONS = [
   // Index 0 is the base game; null placeholder so array indices line up
@@ -59,15 +60,18 @@ export function getAscension(level) {
 }
 
 // Default (level 0) effects — equivalent to the base game with no ascension.
-// forgeSigils lists every sigil at which the Forge opens; the default covers
-// all of them, so the Forge opens after every descent. Harder ascensions
-// (Cold Coals) restrict this to fewer visits.
+// forgeSigils lists every sigil at which the Forge opens. The default is
+// derived from SIGIL_TARGET so it covers every return to the sanctuary however
+// long the run is: sigils 1..SIGIL_TARGET-1, the final descent ending the run
+// rather than returning. Hand-writing the list is what broke when the target
+// went 7 -> 10 (issue 29). Harder ascensions (Cold Coals) restrict this to
+// fewer visits.
 const DEFAULTS = Object.freeze({
   level: 0,
   sanctuaryHealMultiplier: 1,
   boonOfferCount: 3,
   themeTierOffset: 0,
-  forgeSigils: [1, 2, 3, 4, 5, 6, 7],
+  forgeSigils: Array.from({ length: SIGIL_TARGET - 1 }, (_, i) => i + 1),
   maxHpBonus: 0,
   faceCardRankBonus: 0,
 })

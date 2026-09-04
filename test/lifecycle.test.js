@@ -279,6 +279,18 @@ describe('endDescentVictory', () => {
     expect(s.forgeGrantIndex).toBe(0)
   })
 
+  it('opens the Forge on every return, including the last two (issue 29)', () => {
+    // The A0 default used to be a hand-written [1..7], so returns at 8 and 9
+    // sigils silently found the Forge closed -- in the hardest band of the run.
+    for (let sigils = 1; sigils < SIGIL_TARGET; sigils += 1) {
+      const s = cleared({ sigilsEarned: sigils - 1 })
+      expect(s.sigilsEarned, 'returned with the sigil just earned').toBe(sigils)
+      expect(s.phase).toBe('sanctuary')
+      expect(s.forgeOpen, `Forge open on the return at ${sigils} sigils`).toBe(true)
+      expect(s.forgeGrants.length, `a batch to spend at ${sigils} sigils`).toBeGreaterThan(0)
+    }
+  })
+
   it('offers Boons the player must choose from before descending again', () => {
     const s = cleared()
     expect(s.boonChosen).toBe(false)
@@ -455,8 +467,10 @@ describe('getAscensionEffects', () => {
       level: 0, sanctuaryHealMultiplier: 1, boonOfferCount: 3, themeTierOffset: 0,
       maxHpBonus: 0, faceCardRankBonus: 0,
     })
-    // The Forge opens after every descent.
-    expect(getAscensionEffects(0).forgeSigils).toEqual([1, 2, 3, 4, 5, 6, 7])
+    // The Forge opens on every return, which is every sigil short of the
+    // target -- the last descent ends the run rather than returning.
+    expect(getAscensionEffects(0).forgeSigils)
+      .toEqual(Array.from({ length: SIGIL_TARGET - 1 }, (_, i) => i + 1))
   })
 
   it('stacks every level below the requested one', () => {
@@ -469,7 +483,10 @@ describe('getAscensionEffects', () => {
       maxHpBonus: -2,               // A5
       faceCardRankBonus: 1,         // A6
     })
+    // A4 (Cold Coals) names its two sigils in its description, so it stays a
+    // literal pair -- it must not widen with SIGIL_TARGET the way A0 does.
     expect(a6.forgeSigils).toEqual([3, 5])       // A4
+    expect(getAscensionEffects(4).forgeSigils).toEqual([3, 5])
   })
 
   it('clamps out-of-range levels', () => {

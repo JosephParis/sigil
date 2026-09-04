@@ -6,12 +6,13 @@
 -- analytics query or debugging production -- so when you change DDL in api/,
 -- change it here in the same commit. Each section names the file that owns it.
 --
--- Four tables:
+-- Six tables:
 --   runs             -- one row per finished run       (api/_lib/runsTable.js)
 --   profiles         -- one row per signed-in player   (api/save.js)
 --   feedback         -- one row per note sent in-game  (api/feedback.js)
 --   blocked_accounts -- moderation blocklist           (api/_lib/moderation.js)
 --   rate_limits      -- fixed-window write throttle    (api/_lib/rateLimit.js)
+--   handles          -- one row per claimed handle     (api/_lib/handles.js)
 --
 -- ---------------------------------------------------------------------------
 -- runs -- owned by api/_lib/runsTable.js (ensureRunsTable), written by

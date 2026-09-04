@@ -4,7 +4,7 @@ title: "Five API handlers have no tests, including the one that can lose a save"
 priority: P3
 area: testing
 effort: L
-status: open
+status: done
 ---
 
 ## Problem
@@ -68,11 +68,38 @@ first — they cover the only path that can destroy player data.
 
 ## Acceptance criteria
 
-- [ ] `mergeProfiles` covered directly, including order-independence
-- [ ] `/api/save` covered: auth gate, account-from-token, GET, POST, bad body,
+- [x] `mergeProfiles` covered directly, including order-independence
+- [x] `/api/save` covered: auth gate, account-from-token, GET, POST, bad body,
       unconfigured env
-- [ ] `/api/stats` covered: admin gate, dev filtering, version range
-- [ ] `/api/auth`, `/api/feedback`, `/api/cron-backfill-runs` each have a file
-- [ ] The README's test-count table updated to the new totals
-- [ ] Anything that turns out to be provable only against the real database is
+- [x] `/api/stats` covered: admin gate, dev filtering, version range
+- [x] `/api/auth`, `/api/feedback`, `/api/cron-backfill-runs` each have a file
+- [x] The README's test-count table updated to the new totals
+- [x] Anything that turns out to be provable only against the real database is
       added to issue 13 rather than dropped
+
+## Resolution
+
+Closed on `dawn/2026-09-02`. Six files, 74 cases, all vitest against a Neon
+stand-in (or, for `/api/auth`, a stubbed `fetch` driving the real
+`verifyGoogleCredential` rather than mocking the trust boundary away):
+
+| File | Cases | Covers |
+|---|---|---|
+| `test/merge.profiles.test.js` | 14 | union / max / OR fields, run-identity dedupe, the 200 cap, newest-wins saves, convergence, idempotence, a corrupted blob |
+| `test/save.handler.test.js` | 14 | 405, four 401 paths, GET, POST merge + persist, account-and-email from the token, string bodies, invalid payloads leaving the row untouched, 500 |
+| `test/stats.handler.test.js` | 14 | admin gate, unset-token 503, dev filtering, version list parsing and parameter binding, missing feedback table, 500 |
+| `test/feedback.handler.test.js` | 13 | auth gate, rate limit ahead of body parsing, message trim/cap, kind whitelist, context and version nulling, 500 |
+| `test/auth.handler.test.js` | 11 | 405, 503 per missing env var, 400, session minting, audience check, email_verified in both spellings, tokeninfo and network failure |
+| `test/cron.handler.test.js` | 8 | CRON_SECRET and ADMIN_TOKEN accepted, everything else 401, neither configured 503, idempotence clause, 500 |
+
+Unit total 578 -> 652.
+
+`test/stats.handler.test.js` needed a fake client that renders **nested** `sql`
+fragments the way neon flattens them; the composed `runs` subquery is not
+assertable otherwise. Reuse that helper rather than rebuilding it if another
+handler starts composing fragments.
+
+Left to issue 13, as the last acceptance criterion asks: whether the stats
+aggregations compute the right numbers, and whether the backfill's
+insert-select folds the right rows across. Both are SQL against real data and no
+stand-in can prove them.

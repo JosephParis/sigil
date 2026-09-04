@@ -268,3 +268,17 @@ Every remaining box needs either a real browser session or a secret:
 - **Issue 14's live check** — set a handle, win, confirm the run lists; then a
   handle-less win, confirm it does not. The client half is covered by
   `visual/copy-accuracy.spec.js`; the server half is this box.
+
+### Handed over from issue 33 (2026-09-02)
+
+Issue 33 put all five untested handlers under unit test, which pins their
+control flow -- gates, filters, payload shapes -- but deliberately stops at the
+SQL. Two things stay here because only real data can settle them:
+
+- **The `/api/stats` aggregations compute the right numbers.** The unit tests
+  assert that the dev filter and the version filter scope every query; they say
+  nothing about whether a winrate is correct.
+- **`/api/cron-backfill-runs` folds the right rows across.** Its authorization
+  and idempotence clause are asserted; that the insert-select recovers exactly
+  the missing runs, and no others, is a claim about the `profiles` and `runs`
+  tables together.

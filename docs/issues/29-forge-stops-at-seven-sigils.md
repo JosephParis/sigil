@@ -4,7 +4,7 @@ title: "BUG the Forge stops opening at sigil 7 while the run needs 10"
 priority: P1
 area: bug
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -85,12 +85,24 @@ have to make the call — see the `GAME_VERSION` rule in the backlog README.
 
 ## Acceptance criteria
 
-- [ ] The Forge opens on returns at 8 and 9 sigils at A0
-- [ ] The A0 default is derived from `SIGIL_TARGET`, not a hand-written list
-- [ ] Cold Coals still restricts the Forge to sigils 3 and 5
-- [ ] A vitest case covers a return at 8 and 9 sigils (`test/lifecycle.test.js`,
+- [x] The Forge opens on returns at 8 and 9 sigils at A0
+- [x] The A0 default is derived from `SIGIL_TARGET`, not a hand-written list
+- [x] Cold Coals still restricts the Forge to sigils 3 and 5
+- [x] A vitest case covers a return at 8 and 9 sigils (`test/lifecycle.test.js`,
       state factories in `test/support/state.js`)
-- [ ] `test/designDocs.test.js` fails if the Forge cadence and `SIGIL_TARGET`
+- [x] `test/designDocs.test.js` fails if the Forge cadence and `SIGIL_TARGET`
       ever disagree again
-- [ ] Both stale comments corrected (`ascensions.js:62`, `lifecycle.js:496`)
-- [ ] No `VERSION_HISTORY` entry added; the decision above is recorded in this file
+- [x] Both stale comments corrected (`ascensions.js:62`, `lifecycle.js:496`)
+- [x] No `VERSION_HISTORY` entry added; the decision above is recorded in this file
+
+## Resolution
+
+Fixed on `dawn/2026-09-02`. The A0 default is now
+`Array.from({ length: SIGIL_TARGET - 1 }, (_, i) => i + 1)`, so the Forge opens
+on every return however long the run is; `ascensions.js` imports `SIGIL_TARGET`
+from `constants.js` (a leaf, no cycle). Cold Coals keeps its literal `[3, 5]`.
+Both stale comments corrected. `test/lifecycle.test.js` walks a return at every
+sigil from 1 to `SIGIL_TARGET - 1` and asserts the Forge opens with a batch to
+spend; `test/designDocs.test.js` holds REWORK.md's every-visit cadence to the A0
+set, so the two cannot silently disagree again. No `VERSION_HISTORY` entry:
+this shares `0.4` as recorded above.

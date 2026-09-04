@@ -4,7 +4,7 @@ title: "Mobile tests run twice on every push (duplicated CI workflows)"
 priority: P4
 area: ci
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -54,9 +54,30 @@ so there is no undocumented setup step hiding in them. This issue is unblocked.
 
 ## Acceptance criteria
 
-- [ ] One workflow file owns the mobile suite; no duplicate runs on a push
-- [ ] Nothing unique to `mobile-tests.yml` was lost
-- [ ] Unit tests (issue 15) wired in
-- [ ] Playwright report uploaded as an artifact on failure
-- [ ] Explicit decision recorded on the `all-tests` trigger scope
-- [ ] `test-results/` and `visual-screens/` gitignored
+- [x] One workflow file owns the mobile suite; no duplicate runs on a push
+- [x] Nothing unique to `mobile-tests.yml` was lost
+- [x] Unit tests (issue 15) wired in
+- [x] Playwright report uploaded as an artifact on failure
+- [x] Explicit decision recorded on the `all-tests` trigger scope
+- [x] `test-results/` and `visual-screens/` gitignored
+
+## Resolution
+
+Closed on `dawn/2026-09-02`. `.github/workflows/mobile-tests.yml` is deleted;
+`ci.yml` is the single entry point. Nothing was lost with it — the two jobs ran
+the same `npm run test:mobile` on the same chromium install and the same
+triggers, and `ci.yml`'s copy already uploads `playwright-report/` always and
+`test-results/` on failure. The standalone file's only differences were its
+artifact names and a shorter timeout.
+
+Unit tests were already wired into `lint-and-build` (they arrived with issue
+15), and `test-results/`, `visual-screens/`, `playwright-report/` and
+`.playwright/` are all gitignored.
+
+**Decision on `all-tests` scope:** it stays off per-push branch builds. It is
+~20 minutes of browser time, and the `mobile-tests` job already covers the
+surface that actually breaks on a push. The gap — a PR looking green and failing
+on merge — is closed by adding a **nightly schedule (07:00 UTC)** and
+**`workflow_dispatch`**, which is the trade this issue proposed. The job's `if`
+now admits all three: schedule, manual dispatch, and pushes to main/master.
+Revisit if a merge ever breaks something the nightly then catches hours later.

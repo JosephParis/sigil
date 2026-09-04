@@ -20,7 +20,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/audio.test.js` | vitest | 13 pass |
 | `test/pseudonym.test.js` | vitest | 6 pass |
 | `test/combat.test.js` | vitest | 78 pass |
-| `test/lifecycle.test.js` | vitest | 56 pass |
+| `test/lifecycle.test.js` | vitest | 57 pass |
 | `test/dedupeKeys.test.js` | vitest | 40 pass |
 | `test/sanctuary.test.js` | vitest | 40 pass |
 | `test/history.test.js` | vitest | 37 pass |
@@ -29,11 +29,17 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/handleDenylist.test.js` | vitest | 41 pass |
 | `test/moderation.handler.test.js` | vitest | 24 pass |
 | `test/leaderboard.handler.test.js` | vitest | 22 pass |
+| `test/merge.profiles.test.js` | vitest | 14 pass |
+| `test/save.handler.test.js` | vitest | 14 pass |
+| `test/stats.handler.test.js` | vitest | 14 pass |
+| `test/feedback.handler.test.js` | vitest | 13 pass |
+| `test/auth.handler.test.js` | vitest | 11 pass |
+| `test/cron.handler.test.js` | vitest | 8 pass |
 | `test/claim.handler.test.js` | vitest | 22 pass |
 | `test/assignedName.test.js` | vitest | 17 pass |
 | `test/handles.test.js` | vitest | 21 pass |
 | `test/leaderboard.test.js` | vitest | 5 pass |
-| `test/designDocs.test.js` | vitest | 10 pass |
+| `test/designDocs.test.js` | vitest | 15 pass |
 | `test/audioSession.test.js` | vitest | 4 pass |
 | `visual/copy-accuracy.spec.js` | dev | 16 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
@@ -54,7 +60,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/device-lab.spec.js` | dev | 4 pass |
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 
-**Full suite: 576 unit + 192 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Full suite: 656 unit + 192 e2e passed, 1 skipped (`card-library`, issue 12).**
 **Both halves re-measured 2026-08-31** on `main` at `1be2684` — 576 unit,
 192 e2e, one skip, with lint and build clean. The table above
 had drifted — five suites ran without being listed and three counts were wrong —
@@ -137,7 +143,13 @@ describes all five tables), **08** (moderation: a handle denylist enforced
 server-side, `/api/moderation` behind `ADMIN_TOKEN`, and block / delete controls
 on `/admin`), **25** (rules copy reviewed), **23** (`DESIGN.md` marked superseded
 and corrected; `REWORK.md` named as the design of record and its last open
-decision closed).
+decision closed), **29** (the Forge opens on every return again, the A0 cadence
+now derived from `SIGIL_TARGET`), **33** (every API handler under test — the
+save/sync path, the admin stats gate, the Google exchange, feedback and the
+backfill cron; unit total 578 → 652), **36** (`db/schema.sql`'s header lists
+all six tables, and the suite now holds it to the DDL in `api/`), **24** (one
+CI workflow owns the mobile suite; the full suite runs nightly and on demand
+rather than only on main).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -311,13 +323,15 @@ way — same reasoning as the module path.
 **Issue 13 has grown into the real pre-launch gate.** Everything that cannot be
 tested locally has been pushed onto its checklist, because there is no `/api` in
 `vite dev` or `vite preview` and no scraper or mobile device in the harness. Two
-items there are not optional:
+item there is not optional:
 
-- **Create the privacy contact mailbox** (`src/privacyContact.js`). The policy
-  lists an address that does not exist yet, so deletion requests would vanish.
 - **Confirm signed-in players are not being 401'd** by the hardened write
   endpoints. That is the one regression that would silently stop recording every
   signed-in run.
+
+The privacy contact mailbox (`src/privacyContact.js`) was the other one, and it
+is done: `privacy@sigildeck.com` was verified end to end on 2026-08-06, with a
+message sent from an outside account and a reply received.
 
 Issue 02 left one gap, tracked as **issue 27** and now closed: a run that gets
 *stuck* without throwing is discarded from Settings, which the home menu reaches
@@ -359,7 +373,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [10](10-stale-db-schema.md) | `db/schema.sql` no longer describes the database | docs | S | **done** |
 | [26](26-dead-mobile-responsive-spec.md) | **BUG** all 25 tests in `mobile-responsive.spec.js` were dead | testing | M | **done** |
 | [28](28-bare-hands-covers-weapon-preview.md) | **BUG** bare-hands button covers the weapon preview | bug | S | **done** |
-| [29](29-forge-stops-at-seven-sigils.md) | **BUG** the Forge stops opening at sigil 7; the run needs 10 | bug | S | open |
+| [29](29-forge-stops-at-seven-sigils.md) | **BUG** the Forge stops opening at sigil 7; the run needs 10 | bug | S | **done** |
 | [30](30-leaderboard-name-not-synced.md) | **BUG** a signed-in player gets a different name on every device | bug | M | open |
 | [31](31-profile-merge-drops-unknown-fields.md) | The profile merge silently drops fields it does not know | bug | S | open |
 
@@ -384,7 +398,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [18](18-google-fonts-blocking-import.md) | Render-blocking Google Fonts `@import` | performance | S | open |
 | [19](19-robots-txt.md) | No `robots.txt` while `/admin` is live | hygiene | S | **done** |
 | [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | open |
-| [33](33-untested-api-handlers.md) | Five API handlers untested, including the one that can lose a save | testing | L | open |
+| [33](33-untested-api-handlers.md) | Five API handlers untested, including the one that can lose a save | testing | L | **done** |
 | [35](35-no-service-worker.md) | No service worker: manifest-only PWA, no offline play | performance | M | open |
 | [37](37-no-balance-simulator.md) | Nothing can measure the winrate targets the design doc sets | testing | L | open |
 
@@ -396,28 +410,28 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [21](21-gitignore-env.md) | `.gitignore` misses `.env` while docs point at it | security | S | **done** |
 | [22](22-archive-session-docs.md) | Nine session-artifact docs in the repo root | hygiene | S | **done** |
 | [23](23-stale-design-md.md) | `DESIGN.md` contradicts the shipped game | docs | M | **done** |
-| [24](24-duplicate-ci-workflows.md) | Mobile tests run twice per push | ci | S | open |
+| [24](24-duplicate-ci-workflows.md) | Mobile tests run twice per push | ci | S | **done** |
 | [25](25-rules-copy-review.md) | Review rules copy against the post-rework game | docs | S | **done** |
-| [36](36-doc-drift-schema-and-backlog.md) | `schema.sql` miscounts its tables; README lists a done item as open | docs | S | open |
+| [36](36-doc-drift-schema-and-backlog.md) | `schema.sql` miscounts its tables; README lists a done item as open | docs | S | **done** |
 
 ## Pick order
 
-Eleven issues are open. This section is the ordering rule — it beats any
+Seven issues are open. This section is the ordering rule — it beats any
 largest-effort-first default, including an unattended run's.
 
 **Do these before strangers arrive, in this order:**
 
-1. **29** — the Forge stops opening at sigil 7. A rules violation the player can
-   see, in the hardest three descents of the run. Small, contained, testable.
-2. **13** — the production verification pass. **Needs a person** (see below).
-3. **11** then **12** — the flag defaults and the reference UI they gate.
+1. **13** — the production verification pass. **Needs a person** (see below).
+2. **11** then **12** — the flag defaults and the reference UI they gate.
    **11 needs a person**; 12 follows from it.
-4. **31** then **30** — the profile-shape guard, then the name-sync bug it
+3. **31** then **30** — the profile-shape guard, then the name-sync bug it
    protects. In that order: 31 is the test that keeps 30 fixed.
 
-**Then, in any order:** 33 (handler tests), 37 (the balance simulator), 34
+Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
+
+**Then, in any order:** 37 (the balance simulator), 34
 (analytics funnel), 32 (audio payload), 17 (reduced motion), 18 (fonts), 35
-(service worker — after 18 and 32), 24 (CI duplicate), 36 (doc drift).
+(service worker — after 18 and 32).
 
 ### Needs a person, not an agent
 
@@ -435,12 +449,10 @@ rather than approximate them:
 
 ### The standing pick for a long unattended window
 
-**33** (five untested API handlers, effort L). It is built to be interrupted:
-every test file committed is real coverage independent of the rest. Write
-`merge.profiles.test.js` and `save.handler.test.js` first — they cover the only
-path that can silently destroy a player's progress.
+**37** (the balance simulator, effort L). Issue 33 held this slot and closed on
+2026-09-02; every API handler now has tests.
 
-**37 is the other open L, and it is equally interruption-safe** — the run loop,
+**37 is interruption-safe the same way 33 was** — the run loop,
 then the random policy, then the greedy one, then the report, then the baseline,
 each worth having alone. It stays second because 33 guards a player's saved
 progress and 37 guards a number. **Whether 37 should take this slot before batch

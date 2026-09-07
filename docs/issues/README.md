@@ -61,8 +61,9 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-no-scroll.spec.js` | dev | 35 pass |
 | `visual/device-lab.spec.js` | dev | 4 pass |
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
+| `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 697 unit + 192 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Full suite: 697 unit + 197 e2e passed, 1 skipped (`card-library`, issue 12).**
 **Both halves re-measured 2026-09-06** on this merge, with lint and build clean.
 The unit half went 576 → 656 with issues 29, 33, 36 and 24, → 687 with 31 and 30,
 then → 697 with the assigned-name widening. Three branches were cut from
@@ -405,7 +406,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [15](15-unit-tests-game-logic.md) | No unit tests over ~100KB of game logic | testing | L | **done** |
 | [16](16-audio-payload.md) | ~31MB audio, ~17MB byte-identical duplicates | performance | S | **done** |
 | [17](17-prefers-reduced-motion.md) | No `prefers-reduced-motion`; 4 infinite animations | accessibility | S | open |
-| [18](18-google-fonts-blocking-import.md) | Render-blocking Google Fonts `@import` | performance | S | open |
+| [18](18-google-fonts-blocking-import.md) | Render-blocking Google Fonts `@import` | performance | S | **done** |
 | [19](19-robots-txt.md) | No `robots.txt` while `/admin` is live | hygiene | S | **done** |
 | [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | open |
 | [33](33-untested-api-handlers.md) | Five API handlers untested, including the one that can lose a save | testing | L | **done** |
@@ -426,7 +427,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Nine issues are open. This section is the ordering rule — it beats any
+Eight issues are open. This section is the ordering rule — it beats any
 largest-effort-first default, including an unattended run's.
 
 **Do these before strangers arrive, in this order:**
@@ -441,8 +442,12 @@ largest-effort-first default, including an unattended run's.
 Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
 
 **Then, in any order:** 37 (the balance simulator), 34
-(analytics funnel), 32 (audio payload), 17 (reduced motion), 18 (fonts), 35
-(service worker — after 18 and 32).
+(analytics funnel), 32 (audio payload), 17 (reduced motion), 35 (service
+worker — 18 is done now, so this waits only on 32).
+
+Issue 18 (the fonts) closed on 2026-09-06, cherry-picked out of the shelved
+`steam/desktop-shell` branch. Nothing else came with it: the Steam milestone is
+on hold indefinitely and `docs/STEAM.md` is still not part of this backlog.
 
 ### Needs a person, not an agent
 

@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "icons": "node scripts/generate-icons.mjs",
+    "fonts": "node scripts/fetch-fonts.mjs",
     "itch:shots": "node scripts/itch-screenshots.mjs",
     "itch:publish": "node scripts/itch-publish.mjs",
     "test": "vitest run && playwright test",

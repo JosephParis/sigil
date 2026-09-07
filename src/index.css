@@ -1,4 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Self-hosted, and generated: see scripts/fetch-fonts.mjs for which weights are
+   vendored and why this is not an @import to fonts.googleapis.com any more
+   (issue 18). Two round trips to a third party before the first paint, on a
+   game made entirely of typography -- there are no illustrations in src/ at
+   all, so a player who could not reach Google got the whole thing in Georgia
+   and system-ui. */
+@import './fonts.css';
 @import "tailwindcss";
 
 /* Short viewports (iPhone SE/8 at 667, small Androids at 740). Height, not

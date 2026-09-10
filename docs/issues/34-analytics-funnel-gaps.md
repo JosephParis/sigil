@@ -4,7 +4,8 @@ title: "The analytics funnel cannot see the tutorial, which is where batch 1 sta
 priority: P2
 area: product
 effort: M
-status: open
+status: done
+branch: dawn/2026-09-10
 ---
 
 ## Problem
@@ -71,11 +72,46 @@ re-render or a resumed save cannot double-count, and new events need the same.
 
 ## Acceptance criteria
 
-- [ ] Tutorial start, completion and abandonment are all observable
-- [ ] A first session that stops mid-tutorial is distinguishable from one that
+- [x] Tutorial start, completion and abandonment are all observable
+- [x] A first session that stops mid-tutorial is distinguishable from one that
       never started
-- [ ] Boon and Forge choices are recorded with enough context to group them
-- [ ] No event carries a name, an email, or anything derived from the account
-- [ ] Each new event fires exactly once per occurrence (dedupe covered by tests)
-- [ ] `test/pseudonym.test.js`'s no-PII guarantee still holds, extended to the
+- [x] Boon and Forge choices are recorded with enough context to group them
+- [x] No event carries a name, an email, or anything derived from the account
+- [x] Each new event fires exactly once per occurrence (dedupe covered by tests)
+- [x] `test/pseudonym.test.js`'s no-PII guarantee still holds, extended to the
       new properties
+
+## Resolution (2026-09-10)
+
+What gets sent now lives in `src/games/scoundrel/analyticsEvents.js`, a pure
+tracker; `analytics.js` only wires it to React and PostHog. That split is what
+made the dedupe testable: `test/analyticsEvents.test.js` (16 tests) drives it
+with real `createRun` / `endDescentVictory` / `pickBoon` states and observes
+every state twice, as a re-firing effect would. The no-PII sweep lives there
+too, beside the events it checks, rather than in `test/pseudonym.test.js`.
+
+New events: `tutorial_started`, `tutorial_completed`, `tutorial_died`,
+`tutorial_skipped` (with the phase and lessons done when it was left),
+`descent_ended` (any exit, with `result` sanctuary / victory / gameover),
+`boon_taken` (the pick and the offer it came from) and `forge_edit` (grant type,
+applied or skipped, the card's suit and rank). `descent_started` and
+`run_abandoned` now fire during the tutorial and carry `tutorial: true`, as the
+suggested fix proposed. A tutorial death is `tutorial_died`, never `run_ended`,
+so the run-outcome numbers are unchanged.
+
+**One consequence for anyone reading PostHog:** `descent_started` now counts the
+tutorial descent too. An existing insight on it wants a `tutorial != true`
+filter, or it will read slightly high from the day this ships.
+
+**A trap the tests pin down:** the tutorial walk and The Quiet are both descent
+1 of the same run (the tutorial shares its `runStartedAt`), so the old
+`run:descent` dedupe key would have swallowed The Quiet's `descent_started` as
+a repeat the moment the tutorial was counted. The key now names the tutorial.
+
+**Not verified against PostHog.** Like the rest of the analytics, nothing is
+received in `vite dev`; the first real events land after a deploy (issue 13).
+
+On the 37 -> 34 edge: this closes the first-session funnel and the choice
+telemetry, neither of which needs the simulator. The shared descent-survival
+report the graph anticipates is still to be built, once 37 lands, from
+`descent_ended` on one side and the simulator on the other.

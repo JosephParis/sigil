@@ -109,7 +109,85 @@ test.describe('audio payload', () => {
     // A ceiling, not a target. Audio is lazy-loaded per cue rather than up
     // front, but the directory is still what a determined visit pulls down, and
     // it grew to 32MB without anyone noticing.
+    //
+    // 20MB until issue 32 brought the two music beds to the same 96 kb/s mono
+    // the cues already used, which took the directory from 16MB to 5.5MB. The
+    // ceiling moves down with it, because a ceiling left far above the real
+    // figure cannot catch the next bed arriving at 320 kb/s.
     const total = shippedAudio().reduce((n, f) => n + f.bytes, 0)
-    expect(total / 1048576, 'total audio MB').toBeLessThan(20)
+    expect(total / 1048576, 'total audio MB').toBeLessThan(8)
+  })
+
+  /**
+   * Read the first MPEG audio frame header and report its bitrate, sample rate
+   * and channel count.
+   *
+   * Every shipped file opens with an ID3v2 tag, so skip that first -- its size
+   * is a syncsafe integer at bytes 6..9, meaning seven bits per byte. Then scan
+   * for the 11-set-bit frame sync. The header's four bitrate bits index a table
+   * that depends on MPEG version and layer; all of these are MPEG-1 Layer III,
+   * and anything else fails the version assertion rather than being decoded
+   * against the wrong table.
+   */
+  function firstFrame(bytes) {
+    let i = 0
+    if (bytes.slice(0, 3).toString('latin1') === 'ID3') {
+      const size = ((bytes[6] & 0x7f) << 21) | ((bytes[7] & 0x7f) << 14) |
+        ((bytes[8] & 0x7f) << 7) | (bytes[9] & 0x7f)
+      i = 10 + size
+    }
+    for (; i < bytes.length - 4; i++) {
+      if (bytes[i] !== 0xff || (bytes[i + 1] & 0xe0) !== 0xe0) continue
+      const version = (bytes[i + 1] >> 3) & 0x03 // 3 = MPEG-1
+      const layer = (bytes[i + 1] >> 1) & 0x03 // 1 = Layer III
+      if (version !== 3 || layer !== 1) continue
+      const rates = [null, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, null]
+      const kbps = rates[(bytes[i + 2] >> 4) & 0x0f]
+      const hz = [44100, 48000, 32000, null][(bytes[i + 2] >> 2) & 0x03]
+      const mode = (bytes[i + 3] >> 6) & 0x03 // 3 = single channel
+      if (kbps == null || hz == null) continue
+      return { kbps, hz, channels: mode === 3 ? 1 : 2 }
+    }
+    return null
+  }
+
+  test('every music track is 96 kb/s mono at 44.1 kHz', async () => {
+    // The house standard, and the thing that actually holds the budget above.
+    // The two beds arrived at 320 and 256 kb/s stereo and stayed there through
+    // two payload passes, because nothing in the repo could tell the difference
+    // between a bed and a cue -- only the directory total moved, and it moved
+    // slowly enough to look like growth rather than a mistake.
+    //
+    // music/ only. The nine files in sfx/ are a different population: they came
+    // from nine different sources at everything from 32 to 256 kb/s, several of
+    // them MPEG-2 rather than MPEG-1, and they are 0.45MB in total. Holding them
+    // to one encoding would be a separate change with no payload argument
+    // behind it -- see the note in issue 32.
+    const wrong = []
+    for (const f of shippedAudio().filter(f => f.path.startsWith('/audio/music/'))) {
+      const head = readFileSync(join(AUDIO_DIR, ...f.path.split('/').slice(2))).subarray(0, 1 << 20)
+      const frame = firstFrame(head)
+      if (!frame) { wrong.push(`${f.path} -> no MPEG-1 Layer III frame found`); continue }
+      if (frame.kbps !== 96 || frame.hz !== 44100 || frame.channels !== 1) {
+        wrong.push(`${f.path} -> ${frame.kbps} kb/s ${frame.channels === 1 ? 'mono' : 'stereo'} ${frame.hz} Hz`)
+      }
+    }
+    expect(wrong, 'music tracks off the 96 kb/s mono 44.1 kHz standard').toEqual([])
+  })
+
+  test('no cue carries an embedded cover art stream', async () => {
+    // Both beds shipped a 1425x1425 mjpeg in an ID3 APIC frame -- album art,
+    // downloaded by every player and displayed by nothing. ffmpeg carries it
+    // through a transcode unless -map 0:a drops it, so a future re-encode can
+    // reintroduce it without changing anything visible.
+    const withArt = []
+    for (const f of shippedAudio()) {
+      const bytes = readFileSync(join(AUDIO_DIR, ...f.path.split('/').slice(2)))
+      if (bytes.slice(0, 3).toString('latin1') !== 'ID3') continue
+      const size = ((bytes[6] & 0x7f) << 21) | ((bytes[7] & 0x7f) << 14) |
+        ((bytes[8] & 0x7f) << 7) | (bytes[9] & 0x7f)
+      if (bytes.subarray(10, 10 + size).includes('APIC')) withArt.push(f.path)
+    }
+    expect(withArt, 'cues shipping embedded artwork').toEqual([])
   })
 })

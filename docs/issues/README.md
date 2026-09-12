@@ -46,7 +46,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/copy-accuracy.spec.js` | dev | 16 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
-| `visual/robots-and-payload.spec.js` | dev | 8 pass |
+| `visual/robots-and-payload.spec.js` | dev | 10 pass |
 | `visual/privacy.spec.js` | dev | 11 pass |
 | `visual/save-reset.spec.js` | dev | 4 pass |
 | `visual/head-and-manifest.spec.js` | dev | 11 pass |
@@ -408,7 +408,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [17](17-prefers-reduced-motion.md) | No `prefers-reduced-motion`; 4 infinite animations | accessibility | S | open |
 | [18](18-google-fonts-blocking-import.md) | Render-blocking Google Fonts `@import` | performance | S | **done** |
 | [19](19-robots-txt.md) | No `robots.txt` while `/admin` is live | hygiene | S | **done** |
-| [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | open |
+| [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | done |
 | [33](33-untested-api-handlers.md) | Five API handlers untested, including the one that can lose a save | testing | L | **done** |
 | [35](35-no-service-worker.md) | No service worker: manifest-only PWA, no offline play | performance | M | open |
 | [37](37-no-balance-simulator.md) | Nothing can measure the winrate targets the design doc sets | testing | L | open |
@@ -427,7 +427,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Eight issues are open. This section is the ordering rule — it beats any
+Seven issues are open. This section is the ordering rule — it beats any
 largest-effort-first default, including an unattended run's.
 
 **Do these before strangers arrive, in this order:**
@@ -442,8 +442,13 @@ largest-effort-first default, including an unattended run's.
 Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
 
 **Then, in any order:** 37 (the balance simulator), 34
-(analytics funnel), 32 (audio payload), 17 (reduced motion), 35 (service
-worker — 18 is done now, so this waits only on 32).
+(analytics funnel), 17 (reduced motion), 35 (service worker).
+
+Issue 32 (the audio payload) closed on 2026-09-12: the two music beds are at
+the same 96 kb/s mono the cues already used, and `public/audio` went 16MB →
+5.5MB. **That unblocks 35** — a service worker can now precache the audio
+without precaching 15MB, which was the open question. `dist-itch.zip` is stale
+by the same 10MB until `npm run build:itch` is next run.
 
 Issue 18 (the fonts) closed on 2026-09-06, cherry-picked out of the shelved
 `steam/desktop-shell` branch. Nothing else came with it: the Steam milestone is
@@ -495,7 +500,7 @@ Issue 15 held this slot until it closed on 2026-08-30. Do not pick it again.
 31 (shape guard) ──> 30 (name sync: the guard is what keeps it fixed)
 30 (name sync) ────> 13 (adds a cross-device check to the prod pass)
 18 (local fonts) ──> 35 (nothing to precache while the fonts are third-party)
-32 (audio size) ───> 35 (decides what a service worker must not precache)
+32 (audio size) ───> 35 (decides what a service worker must not precache)  [32 done]
 35 (service worker) ──> 13 (a stale-shell bug cannot be fixed by deploying)
 29 (forge cadence) ──> 34 (settle how many Forge visits a run has before
                           instrumenting the choices made in them)

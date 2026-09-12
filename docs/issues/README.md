@@ -63,7 +63,11 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 697 unit + 197 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Full suite: 697 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
+**The dev half re-measured 2026-09-12** on the issue-32 branch: 185 pass, one
+skip, with lint and build clean. Issue 32 added two tests to
+`robots-and-payload.spec.js`; the two `prod` specs (14) were not re-run that day
+and are carried forward from 2026-09-06.
 **Both halves re-measured 2026-09-06** on this merge, with lint and build clean.
 The unit half went 576 → 656 with issues 29, 33, 36 and 24, → 687 with 31 and 30,
 then → 697 with the assigned-name widening. Three branches were cut from

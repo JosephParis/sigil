@@ -4,7 +4,7 @@ title: "Nothing can measure the winrate targets the design doc sets"
 priority: P3
 area: testing
 effort: L
-status: open
+status: in-progress
 ---
 
 ## Problem
@@ -246,3 +246,36 @@ README.
 - [ ] Nothing under `src/` imports `sim/`, and the bundle does not grow
 - [ ] `npm run lint && npm run build && npm run test` clean, with the baseline
       table in `docs/issues/README.md` updated to the new counts
+
+## Measured, 2026-09-09 (partial — `dawn/2026-09-09`)
+
+The loop and both policies are built (`sim/run.js`, `sim/policies.js`,
+`test/sim.test.js`). The report, the CLI and `sim/baseline.json` are not.
+
+**The first number the instrument produced disagrees with the spec, hard.**
+Over 40 seeds at the reference population (default mode, Ascension 0,
+`tutorial: false`):
+
+| Policy | Winrate | Descent 1 survival | Avg actions | Deaths | Forge visits |
+|---|---|---|---|---|---|
+| random | 0% | **0%** | 12.8 | all `monster` | 0 |
+| greedy | 0% | **0%** | 26.3 | all `monster` | 0 |
+
+Against `WINRATE_TARGETS.md:44` (total ~20%) and `:52-66` (descent 1 at 97%).
+
+**This is recorded, not explained.** Which side the gap is on is open:
+
+- `greedyPolicy` is one ply and crude. It takes weapons in room order, so it
+  will discard a good blade for a worse one, and it drinks on a fixed 70%
+  threshold. A weak policy dying in the warm-up descent is plausible.
+- Against that: descent 1 is The Quiet, +10 max HP and the friendliest theme in
+  the game, and the target for it is 97%. A policy that never once clears it
+  over 40 seeds is a large miss.
+
+**Do not treat the 0% as a balance verdict until the greedy policy has had a
+second pass.** Strengthening weapon selection is the first thing to try.
+
+The "greedy materially outperforms random" criterion is met on **actions
+survived** (26.3 vs 12.8) and **not** on descents reached, where both sit at 1.
+`test/sim.test.js` asserts the former and says why in a comment, so a green
+test cannot be mistaken for agreement with the targets.

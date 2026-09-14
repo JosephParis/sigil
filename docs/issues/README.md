@@ -43,6 +43,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/audioSession.test.js` | vitest | 4 pass |
 | `test/profileShape.test.js` | vitest | 16 pass |
 | `test/nameSync.test.js` | vitest | 15 pass |
+| `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `visual/copy-accuracy.spec.js` | dev | 16 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
@@ -63,7 +64,8 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 697 unit + 197 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Full suite: 713 unit + 197 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Unit half 697 -> 713 on 2026-09-10** with issue 34 (e2e not re-run).
 **Both halves re-measured 2026-09-06** on this merge, with lint and build clean.
 The unit half went 576 → 656 with issues 29, 33, 36 and 24, → 687 with 31 and 30,
 then → 697 with the assigned-name widening. Three branches were cut from
@@ -160,7 +162,8 @@ save/sync path, the admin stats gate, the Google exchange, feedback and the
 backfill cron; unit total 578 → 652), **36** (`db/schema.sql`'s header lists
 all six tables, and the suite now holds it to the DDL in `api/`), **24** (one
 CI workflow owns the mobile suite; the full suite runs nightly and on demand
-rather than only on main).
+rather than only on main), **34** (the analytics funnel sees the tutorial, the
+Forge and boon choices, and every descent exit; decided in a pure, tested tracker).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -397,7 +400,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [13](13-verify-admin-stats-in-prod.md) | Verify `/api/stats` + `/admin` in prod before inviting anyone | product | S | open |
 | [14](14-anonymous-handle-copy-mismatch.md) | **BUG** UI promises "Anonymous" listing; server excludes it | bug | S | **done** |
 | [27](27-save-reset-outside-crash-path.md) | No save reset for a run stuck without crashing | product | S | **done** |
-| [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | open |
+| [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
 
 ### P3 — quality, performance, accessibility
 
@@ -427,7 +430,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Eight issues are open. This section is the ordering rule — it beats any
+Seven issues are open. This section is the ordering rule — it beats any
 largest-effort-first default, including an unattended run's.
 
 **Do these before strangers arrive, in this order:**
@@ -441,8 +444,7 @@ largest-effort-first default, including an unattended run's.
 
 Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
 
-**Then, in any order:** 37 (the balance simulator), 34
-(analytics funnel), 32 (audio payload), 17 (reduced motion), 35 (service
+**Then, in any order:** 37 (the balance simulator), 32 (audio payload), 17 (reduced motion), 35 (service
 worker — 18 is done now, so this waits only on 32).
 
 Issue 18 (the fonts) closed on 2026-09-06, cherry-picked out of the shelved

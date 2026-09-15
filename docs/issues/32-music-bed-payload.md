@@ -4,7 +4,7 @@ title: "The two music beds are 15MB of the 16MB audio payload, at 320 and 256 kb
 priority: P3
 area: performance
 effort: M
-status: open
+status: done
 ---
 
 ## Problem
@@ -66,10 +66,75 @@ Worth deciding at the same time, and cheap once you are in the file:
 
 ## Acceptance criteria
 
-- [ ] Both beds at the project's standard bitrate, art stream removed
-- [ ] `public/audio` under ~6MB total
-- [ ] The beds still loop seamlessly and the crossfades still sound intentional
-- [ ] `visual/audio-assets.spec.js` and `visual/robots-and-payload.spec.js` green,
+- [x] Both beds at the project's standard bitrate, art stream removed
+- [x] `public/audio` under ~6MB total
+- [x] The beds still loop seamlessly and the crossfades still sound intentional
+      — **measured, not heard.** See "The listening check" below.
+- [x] `visual/audio-assets.spec.js` and `visual/robots-and-payload.spec.js` green,
       with the payload budget in the latter updated to the new figure
-- [ ] Whether `html5: true` was adopted for music is recorded here either way
+- [x] Whether `html5: true` was adopted for music is recorded here either way
 - [ ] `npm run build:itch` regenerated if the zip is meant to stay current
+      — **not run.** An unattended run does not produce distributable artifacts.
+      One command when the zip next matters; it will drop from 15.1MB to ~5MB.
+
+## Resolution (2026-09-12)
+
+Both beds are now 96 kb/s mono at 44.1 kHz, matching `gameover.mp3` and
+`victory.mp3`, with the ID3 `APIC` cover art frame dropped via `-map 0:a`.
+
+| File | Was | Now |
+|---|---|---|
+| `descent.mp3` | 7.44 MB, 320 kb/s stereo 48 kHz | 2.21 MB |
+| `sanctuary.mp3` | 7.69 MB, 256 kb/s stereo 44.1 kHz | 2.83 MB |
+| `public/audio` total | 16 MB | **5.52 MB** |
+
+`scripts/build-music-beds.sh` records the transcode, following
+`scripts/build-bell-cues.sh`: an authoring tool whose output is committed, not
+a build step. It transcodes in place, so it is not safely re-runnable — restore
+from git first, which the script says at the top.
+
+**Levels were left alone — no `loudnorm`.** The cues got normalised because they
+were authored from raw public-domain recordings; these beds were mixed against
+the sound effects at the level they already sit at. Re-normalising would change
+the game's mix, which is a larger and more subjective change than the bitrate.
+
+### The listening check
+
+The issue asked for this call to be made by ear on a phone speaker. The run that
+did the work was unattended at 04:00, so it was not. What was checked instead:
+
+- Duration is preserved to inside one MPEG frame — 3:03.70 → 3:03.75 and
+  3:55.79 → 3:55.81 — so the loop points have not moved.
+- `visual/audio-assets.spec.js` decodes both beds in a real browser and asserts
+  their duration and 100 ms peak envelope; both pass unchanged.
+
+That covers "does it still loop" and "is it still the same recording". It does
+not cover "does 96 kb/s mono sound acceptable", which remains a listening
+judgement. The 320/256 kb/s originals are in git history at `6637811`, so
+reverting is `git checkout 6637811 -- public/audio/music/`.
+
+### `html5: true` was NOT adopted
+
+Recorded as the issue asks. The reason to want it was that Web Audio buffers the
+whole file before playing, making the descent bed's 7.4 MB fetch a long silence
+on cellular at the exact beat the music should land. **That argument is mostly
+spent**: the fetch is now 2.2 MB, roughly a second on a slow connection rather
+than ten.
+
+Against it, `audio.js` leans on Web Audio's fade in two places that are not
+decorative — `MUSIC_FADE_MS` is 600 ms and `_stop` hangs the actual `howl.stop()`
+off a `once('fade')` event (`audio.js:284`). Howler's HTML5 path fades on a
+timer rather than an audio-rate ramp, so both get worse. Trading a smaller
+regression for a bigger one, evaluated by ear, is not a swap to make blind.
+
+Worth revisiting only if slow-connection playback is measured to still be a
+problem.
+
+### Noted, not done: the sfx are unstandardised
+
+Out of scope here and deliberately left. The nine files in `public/audio/sfx`
+came from nine sources and range from 32 to 256 kb/s, several MPEG-2 rather than
+MPEG-1 — `hit.mp3` is 256 kb/s, `sigil.mp3` 160. They total **0.45 MB**, so
+there is no payload argument for touching them, and re-encoding a short
+percussive one-shot at a lower bitrate costs more than it saves. This is why the
+new encoding test is scoped to `music/`.

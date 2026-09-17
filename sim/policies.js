@@ -91,6 +91,24 @@ const DRINK_BELOW = 0.7
 // current HP, and fleeing is still allowed.
 const FLEE_AT = 0.9
 
+// What a held weapon is still worth, in HP it can absorb.
+//
+// The binding rule (`combat.js:86-88`) is that a blade which has slain
+// something may only answer monsters of that rank or lower, and a fresh blade
+// answers anything. So a weapon's usefulness is its rank capped by what it is
+// still allowed to hit: a rank 10 blunted down to 2 is worth 2, and a fresh 3
+// is worth 3. That single number is why a fresh low weapon can be a real
+// upgrade over a spent high one.
+function weaponWorth(weapon) {
+  if (!weapon) return 0
+  const cap = weapon.lastSlain ? weapon.lastSlain.rank : Number.POSITIVE_INFINITY
+  return Math.min(weapon.rank ?? 0, cap)
+}
+
+function isFresh(weapon) {
+  return !!weapon && !weapon.lastSlain
+}
+
 // What this monster costs right now, using the game's own preview rather than
 // a second implementation of the damage rules. `null` means unknown (face
 // down), which the policy treats as expensive.
@@ -122,10 +140,21 @@ export function greedyPolicy(state, rng = Math.random) {
   const room = (state.room || []).map((card, index) => ({ card, index })).filter(e => e.card)
   const ordered = []
 
-  // Weapons and utilities first: they are free and only ever help.
-  for (const { card, index } of room) {
-    if (isWeapon(card)) ordered.push({ apply: s => playCard(s, index) })
+  // Weapons: take the best one in the room, and only when it beats what is
+  // already in hand. The first version of this policy took every weapon in
+  // room order, which threw a good blade away for a worse one on the next
+  // card and is most of why it never cleared a descent.
+  const weapons = room
+    .filter(e => isWeapon(e.card))
+    .map(e => ({ ...e, worth: e.card.rank ?? 0 }))
+    .sort((a, b) => b.worth - a.worth)
+  const held = weaponWorth(state.weapon)
+  if (weapons.length > 0 && weapons[0].worth > held) {
+    const { index } = weapons[0]
+    ordered.push({ apply: s => playCard(s, index) })
   }
+
+  // Utilities (tools, coins) are free and only ever help.
   for (const { card, index } of room) {
     if (!isWeapon(card) && !isPotion(card) && !isMonster(card)) {
       ordered.push({ apply: s => playCard(s, index) })
@@ -151,6 +180,19 @@ export function greedyPolicy(state, rng = Math.random) {
     for (const { index } of potions) ordered.push({ apply: s => playCard(s, index) })
   }
 
+  // A fresh blade may answer anything, and the first kill caps it at that
+  // rank forever. So spend it on the BIGGEST monster it can take without
+  // killing us, rather than the cheapest: killing the cheapest first blunts a
+  // rank 10 down to a rank 2 and wastes the rest of the blade. Once it is
+  // blunted, cheapest-first is right again.
+  const affordable = monsters.filter(m => m.cost < state.hp)
+  if (isFresh(state.weapon) && affordable.length > 0) {
+    const biggest = affordable
+      .filter(m => isWeaponUsableFor(state, m.card))
+      .sort((a, b) => (b.card.rank ?? 0) - (a.card.rank ?? 0))[0]
+    if (biggest) ordered.push({ apply: s => playCard(s, biggest.index) })
+  }
+
   for (const { card, index } of monsters) {
     // playCard swings the best bound weapon when there is one; playCardBare is
     // the fallback for a monster no weapon will answer.
@@ -158,9 +200,11 @@ export function greedyPolicy(state, rng = Math.random) {
     ordered.push({ apply: s => playCardBare(s, index) })
   }
 
-  // Anything left: potions not yet drunk, then a random legal action so that an
+  // Anything left: potions not yet drunk, a weapon we judged no upgrade (it is
+  // still better than being stuck), then a random legal action so that an
   // unforeseen room shape ends the run rather than stalling it.
   for (const { index } of potions) ordered.push({ apply: s => playCard(s, index) })
+  for (const { index } of weapons) ordered.push({ apply: s => playCard(s, index) })
 
   const next = applyFirstAccepted(state, ordered)
   if (next !== state) return next

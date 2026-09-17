@@ -87,9 +87,32 @@ export function randomPolicy(state, rng = Math.random) {
 
 // Below this fraction of max HP, drink before fighting.
 const DRINK_BELOW = 0.7
-// Flee when the cheapest monster in the room would take this fraction of
-// current HP, and fleeing is still allowed.
-const FLEE_AT = 0.9
+// Flee when clearing the room would cost this fraction of current HP.
+//
+// The first version tested the CHEAPEST monster against 0.9 of HP, which is a
+// test that almost never fires and fires too late when it does: over 120 seeds
+// flight was legal in 1016 rooms and the policy took it 13 times. A room is a
+// commitment to three of its four cards, so the decision has to be priced on
+// the room rather than on its easiest card.
+const FLEE_AT = 0.55
+
+// A room forces three of its four cards (`ROOM_SIZE` less the one left
+// behind), so its cost is the net HP swing of the cheapest three: monsters
+// cost, potions refund, weapons and tools are free. An estimate is enough - it
+// only has to be better than looking at one card.
+const CARDS_FORCED_PER_ROOM = 3
+
+function roomCost(state, room) {
+  const swings = room.map(({ card }) => {
+    if (isMonster(card)) return monsterCost(state, card)
+    if (isPotion(card)) return -(card.rank ?? 0)
+    return 0
+  })
+  return swings
+    .sort((a, b) => a - b)
+    .slice(0, CARDS_FORCED_PER_ROOM)
+    .reduce((total, swing) => total + (Number.isFinite(swing) ? swing : 0), 0)
+}
 
 // What a held weapon is still worth, in HP it can absorb.
 //
@@ -172,26 +195,35 @@ export function greedyPolicy(state, rng = Math.random) {
     for (const { index } of potions) ordered.push({ apply: s => playCard(s, index) })
   }
 
-  const cheapest = monsters[0]
-  const lethal = cheapest && cheapest.cost >= state.hp * FLEE_AT
-  if (lethal && canFleeRoom(state)) {
-    ordered.push({ apply: s => fleeRoom(s) })
+  const tooExpensive = roomCost(state, room) >= state.hp * FLEE_AT
+  if (tooExpensive && canFleeRoom(state)) {
+    // Ahead of everything, including a weapon we would like: flight takes the
+    // whole room, and playing any card at all forfeits it. Deciding to leave
+    // and then picking up one more card is how the old rule managed to test
+    // for flight and never take it.
+    ordered.unshift({ apply: s => fleeRoom(s) })
     // Drinking is the fallback when the room is warded and flight is refused.
     for (const { index } of potions) ordered.push({ apply: s => playCard(s, index) })
   }
 
-  // A fresh blade may answer anything, and the first kill caps it at that
-  // rank forever. So spend it on the BIGGEST monster it can take without
-  // killing us, rather than the cheapest: killing the cheapest first blunts a
-  // rank 10 down to a rank 2 and wastes the rest of the blade. Once it is
-  // blunted, cheapest-first is right again.
+  // Swing at the BIGGEST monster the blade can answer, not the cheapest.
+  //
+  // The binding cap only ever falls (`combat.js:299`), so every kill spends
+  // some of the weapon's remaining reach and descending order is the order
+  // that wastes none of it. Descent 1's deck is the proof: 16 monsters
+  // summing to rank 88, against a rank 6 weapon and 30 HP. Taken in
+  // descending order a single 6 absorbs all of it for about 12 damage
+  // (9,9,8,8,7,7 cost 3,3,2,2,1,1 and everything at or below 6 is free);
+  // taken cheapest-first the same blade is blunted to a 2 in three swings and
+  // every large monster after that has to be fought bare-handed.
+  //
+  // Cheapest-first is why the first version of this policy could not clear the
+  // friendliest theme in the game.
   const affordable = monsters.filter(m => m.cost < state.hp)
-  if (isFresh(state.weapon) && affordable.length > 0) {
-    const biggest = affordable
-      .filter(m => isWeaponUsableFor(state, m.card))
-      .sort((a, b) => (b.card.rank ?? 0) - (a.card.rank ?? 0))[0]
-    if (biggest) ordered.push({ apply: s => playCard(s, biggest.index) })
-  }
+  const biggestArmed = affordable
+    .filter(m => isWeaponUsableFor(state, m.card))
+    .sort((a, b) => (b.card.rank ?? 0) - (a.card.rank ?? 0))[0]
+  if (biggestArmed) ordered.push({ apply: s => playCard(s, biggestArmed.index) })
 
   for (const { card, index } of monsters) {
     // playCard swings the best bound weapon when there is one; playCardBare is

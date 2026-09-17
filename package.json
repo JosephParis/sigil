@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:itch": "node scripts/build-itch.mjs",
     "lint": "eslint .",
+    "sim": "node scripts/sim.mjs",
     "preview": "vite preview",
     "icons": "node scripts/generate-icons.mjs",
     "fonts": "node scripts/fetch-fonts.mjs",

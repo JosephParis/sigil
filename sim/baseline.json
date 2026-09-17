@@ -1,0 +1,152 @@
+{
+  "meta": {
+    "runs": 200,
+    "policy": "greedy",
+    "seed": 1
+  },
+  "total": {
+    "wins": 0,
+    "winrate": 0,
+    "band": {
+      "low": 15,
+      "high": 25,
+      "target": 20
+    },
+    "verdict": "below"
+  },
+  "descents": [
+    {
+      "descent": 1,
+      "entered": 200,
+      "cleared": 91,
+      "survival": 45.5,
+      "target": 97,
+      "delta": -51.5
+    },
+    {
+      "descent": 2,
+      "entered": 91,
+      "cleared": 7,
+      "survival": 7.7,
+      "target": 95,
+      "delta": -87.3
+    },
+    {
+      "descent": 3,
+      "entered": 7,
+      "cleared": 0,
+      "survival": 0,
+      "target": 93,
+      "delta": -93
+    }
+  ],
+  "themes": [
+    {
+      "themeId": "the_quiet",
+      "tier": "Quiet",
+      "low": 96,
+      "high": 98,
+      "entered": 200,
+      "cleared": 91,
+      "survival": 45.5,
+      "verdict": "below"
+    },
+    {
+      "themeId": "locust_swarm",
+      "tier": "Tier 1",
+      "low": 94,
+      "high": 96,
+      "entered": 32,
+      "cleared": 1,
+      "survival": 3.1,
+      "verdict": "below"
+    },
+    {
+      "themeId": "the_armory",
+      "tier": "Tier 1",
+      "low": 94,
+      "high": 96,
+      "entered": 34,
+      "cleared": 2,
+      "survival": 5.9,
+      "verdict": "below"
+    },
+    {
+      "themeId": "the_apothecary",
+      "tier": "Tier 1",
+      "low": 94,
+      "high": 96,
+      "entered": 25,
+      "cleared": 4,
+      "survival": 16,
+      "verdict": "below"
+    },
+    {
+      "themeId": "bitter_brew",
+      "tier": "Tier 2",
+      "low": 92,
+      "high": 94,
+      "entered": 1,
+      "cleared": 0,
+      "survival": 0,
+      "verdict": "below"
+    },
+    {
+      "themeId": "the_swarm",
+      "tier": "Tier 2",
+      "low": 92,
+      "high": 94,
+      "entered": 1,
+      "cleared": 0,
+      "survival": 0,
+      "verdict": "below"
+    },
+    {
+      "themeId": "the_crypt",
+      "tier": "Tier 2",
+      "low": 92,
+      "high": 94,
+      "entered": 3,
+      "cleared": 0,
+      "survival": 0,
+      "verdict": "below"
+    },
+    {
+      "themeId": "sharpened_fangs",
+      "tier": "Tier 2",
+      "low": 92,
+      "high": 94,
+      "entered": 1,
+      "cleared": 0,
+      "survival": 0,
+      "verdict": "below"
+    },
+    {
+      "themeId": "the_menagerie",
+      "tier": "Tier 2",
+      "low": 92,
+      "high": 94,
+      "entered": 1,
+      "cleared": 0,
+      "survival": 0,
+      "verdict": "below"
+    }
+  ],
+  "deaths": {
+    "monster": 197,
+    "apothecary_potion": 3
+  },
+  "forge": {
+    "mean": 0.5,
+    "min": 0,
+    "max": 2
+  },
+  "reached": {
+    "mean": 1.5,
+    "max": 3
+  },
+  "steps": {
+    "mean": 44
+  },
+  "generated": "2026-09-17"
+}

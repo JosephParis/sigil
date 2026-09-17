@@ -128,9 +128,6 @@ function weaponWorth(weapon) {
   return Math.min(weapon.rank ?? 0, cap)
 }
 
-function isFresh(weapon) {
-  return !!weapon && !weapon.lastSlain
-}
 
 // What this monster costs right now, using the game's own preview rather than
 // a second implementation of the damage rules. `null` means unknown (face

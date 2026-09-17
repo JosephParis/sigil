@@ -64,7 +64,13 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 722 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
+| `test/simBaseline.test.js` | vitest | 7 pass |
+
+**Full suite: 729 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Unit half re-measured 2026-09-17** on issue 37's second pass: 722 → 729, with
+lint and build clean. The e2e half was **not** re-run on that branch — it
+changes nothing under `src/`, and `sim/` is not reachable from the app — so the
+199 is carried forward from 2026-09-14 rather than measured.
 **Both halves re-measured 2026-09-14** on the merge of issues 37 (partial), 34 and 32,
 with lint and build clean: dev 185 pass + 1 skip, prod 14 pass. Unit 697 → 722
 (37 added 9, 34 added 16). One dev run saw two `device-lab` tests fail under load;

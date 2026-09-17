@@ -223,31 +223,76 @@ README.
 
 ## Acceptance criteria
 
-- [ ] `sim/` drives a complete run headlessly from `createRun` to `gameover` or
+- [x] `sim/` drives a complete run headlessly from `createRun` to `gameover` or
       `victory` using only the barrel exports in `src/games/scoundrel/logic.js`
-- [ ] The same seed produces an identical run record across processes
-- [ ] `randomPolicy` and `greedyPolicy` both play legal runs to termination
-- [ ] A step guard fails loudly on a non-terminating run instead of hanging
-- [ ] `npm run sim -- --runs 10000 --policy greedy` prints total winrate,
+- [x] The same seed produces an identical run record across processes
+- [x] `randomPolicy` and `greedyPolicy` both play legal runs to termination
+- [x] A step guard fails loudly on a non-terminating run instead of hanging
+- [x] `npm run sim -- --runs 10000 --policy greedy` prints total winrate,
       per-descent survival, per-theme survival against its tier band, deaths by
       cause, and Forge visits per run
-- [ ] Simulation defaults to the reference population: default mode, Ascension 0,
+- [x] Simulation defaults to the reference population: default mode, Ascension 0,
       `tutorial: false`
-- [ ] `greedyPolicy` materially outperforms `randomPolicy` — if it does not, stop
+- [x] `greedyPolicy` materially outperforms `randomPolicy` — if it does not, stop
       and record that here, because it means something is wrong with the policy
       or with the game
-- [ ] `sim/baseline.json` holds a greedy curve over a fixed seed range
+- [x] `sim/baseline.json` holds a greedy curve over a fixed seed range
 - [ ] A vitest case fails when the simulated total winrate leaves the 15–25%
       band, and runs in under a second
-- [ ] The measured curve is written into this file, next to the targets it is
+- [x] The measured curve is written into this file, next to the targets it is
       being compared against, whether or not it agrees with them
-- [ ] Forge visits per run are checked against `SIGIL_TARGET - 1` at Ascension 0,
+- [x] Forge visits per run are checked against `SIGIL_TARGET - 1` at Ascension 0,
       so issue 29's regression cannot come back silently
-- [ ] Nothing under `src/` imports `sim/`, and the bundle does not grow
+- [x] Nothing under `src/` imports `sim/`, and the bundle does not grow
 - [ ] `npm run lint && npm run build && npm run test` clean, with the baseline
       table in `docs/issues/README.md` updated to the new counts
 
-## Measured, 2026-09-09 (partial — `dawn/2026-09-09`)
+## Measured, 2026-09-17 (partial — `dawn/2026-09-17`)
+
+**The 0% below was the policy, not the game.** The section after this one is
+kept for the record but its number is superseded.
+
+Three errors in `greedyPolicy`, all about the weapon, and they are why it had
+never cleared the friendliest theme in the game:
+
+- It took **every** weapon in room order, discarding a 6 for a 3 one card later.
+- It killed the **cheapest** monster first. The binding cap only ever falls
+  (`combat.js:299`), so three swings blunted a 6 down to a 2 and every large
+  monster after that was fought bare-handed.
+- It priced flight on the room's **easiest card**, a test that fired in 13 of
+  1016 rooms where flight was legal.
+
+Descent 1's own deck is what made this checkable, and it is the same every run:
+16 monsters summing to rank 88, five weapons of rank 2–6, five potions summing
+to 20, against 30 HP. Taken in **descending** order one rank-6 blade absorbs the
+whole 88 for about 12 damage (9, 9, 8, 8, 7, 7 cost 3, 3, 2, 2, 1, 1; everything
+at or below 6 is free). So the descent is comfortably survivable and a 97%
+target is not the problem.
+
+Over seeds 1–200 at the reference population, after those three fixes:
+
+| Policy | Winrate | Descent 1 | Descent 2 | Avg descents | Forge visits |
+|---|---|---|---|---|---|
+| random | 0% | 0% | — | 1.0 | 0 |
+| greedy | 0% | **45.5%** (was 0%) | 7.7% | 1.5 | 0.5 |
+
+`greedyPolicy` now **materially outperforms random on descents reached**, not
+only on actions survived, so that acceptance criterion is met properly.
+
+**The total winrate is still 0% and descent 1 is still 51 points under target.**
+That is a real gap and it is not yet attributable. What is now known is that the
+first descent is arithmetically generous, so the remaining gap is most likely
+still policy: the obvious unfixed weaknesses are potion timing (a flat 70%-of-max
+threshold, and it will drink two potions in one room), which card it chooses to
+leave behind, and that it never retires voluntarily. **Do not read the 0% as a
+balance verdict yet.** The next pass should be another policy pass.
+
+**The 15–25% band is deliberately not asserted in the suite.** A test written
+straight against it would be red on commit and skipped within a week, so
+`test/simBaseline.test.js` guards the stored baseline instead and both files say
+why. Flip it to the band once a policy actually reaches it.
+
+## Measured, 2026-09-09 (superseded — `dawn/2026-09-09`)
 
 The loop and both policies are built (`sim/run.js`, `sim/policies.js`,
 `test/sim.test.js`). The report, the CLI and `sim/baseline.json` are not.

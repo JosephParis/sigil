@@ -113,16 +113,26 @@ test('a new deploy is picked up on the next launch without clearing site data', 
     })
 
     // Next launch: every tab on the old worker closes, a fresh one opens.
+    // The browser activates the waiting worker once no client holds the old
+    // one, which is asynchronous, so the relaunch is polled rather than timed.
+    // Navigating before that would make the new tab a client of the old worker
+    // and hold the update back again, so wait on the worker itself first.
     const next = await context.newPage()
     await page.close()
-    await expect.poll(async () => next.evaluate(async () => {
-      const reg = await navigator.serviceWorker.getRegistration()
-      return reg?.active?.state === 'activated' && reg.waiting === null
-    }).catch(() => false)).toBe(true)
-
-    await next.goto('/')
+    await expect.poll(async () => {
+      for (const w of context.serviceWorkers()) {
+        const settled = await w.evaluate(() =>
+          self.registration.waiting === null && self.registration.active?.state === 'activated',
+        ).catch(() => false)
+        if (settled) return true
+      }
+      return false
+    }, { timeout: 15000 }).toBe(true)
+    await expect.poll(async () => {
+      await next.goto('/')
+      return next.locator('meta[name="sigil-deploy"]').count()
+    }, { timeout: 15000 }).toBe(1)
     await booted(next)
-    await expect(next.locator('meta[name="sigil-deploy"]')).toHaveCount(1)
 
     // And it is the new shell that is cached: offline still shows it, and the
     // old version's cache is gone.

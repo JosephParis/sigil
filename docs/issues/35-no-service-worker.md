@@ -4,7 +4,8 @@ title: "No service worker: the PWA is manifest-only and the offline-first game n
 priority: P3
 area: performance
 effort: M
-status: open
+status: done
+branch: dawn/2026-09-19
 ---
 
 ## Problem
@@ -64,12 +65,39 @@ the existing pattern for exactly this class of thing.
 
 ## Acceptance criteria
 
-- [ ] The app shell loads with the network offline
-- [ ] `/api/*` is never served from cache
-- [ ] A new deploy is picked up without the player clearing site data — proven
+- [x] The app shell loads with the network offline
+- [x] `/api/*` is never served from cache
+- [x] A new deploy is picked up without the player clearing site data — proven
       by a test, not by reasoning
-- [ ] The audio directory is not precached
-- [ ] The itch standalone build is unaffected (`visual/itch-build.spec.js` green)
-- [ ] The three decisions above are recorded in this file
-- [ ] Add to issue 13: confirm the update path against the real deployment
+- [x] The audio directory is not precached
+- [x] The itch standalone build is unaffected (`visual/itch-build.spec.js` green)
+- [x] The three decisions above are recorded in this file
+- [x] Add to issue 13: confirm the update path against the real deployment
       before inviting anyone, since a stale-shell bug cannot be fixed remotely
+
+## Decisions (2026-09-19)
+
+- **Update path: update on next launch, no `skipWaiting`.** Every build stamps
+  a new version into `sw.js` (git SHA + build time), so the browser installs
+  the new worker on its next check. It precaches the new shell into its own
+  cache and waits; it takes over once every tab on the old one has closed, and
+  its `activate` deletes every other cache. A live run is never handed new code
+  mid-descent. Proven in `visual/service-worker.prod.spec.js` by rewriting
+  `dist/sw.js` and `dist/index.html` under a running preview.
+- **Standalone (itch) build: no worker at all.** The plugin does not run for
+  that target and the registration is compiled out; `visual/itch-build.spec.js`
+  asserts both.
+- **Hand-written, no plugin.** `src/sw/worker.js` is the worker (~50 lines);
+  `serviceWorker()` in `vite.config.js` fills in its version and precache list
+  after the build, and `scripts/sw-precache.mjs` is the list's rule (unit-tested
+  in `test/swPrecache.test.js`).
+
+What the worker does: navigations get the cached `index.html`; precached files
+are cache-first; `/api/*`, the audio and anything not precached are left to the
+network untouched (no `respondWith`), so offline the API fails as it does today.
+Audio is not runtime-cached either; offline play is silent, which the audio
+layer already tolerates.
+
+Nothing in `vercel.json` changed: its rewrite only applies when no file
+matches, so `/sw.js` is served as a static file, and browsers bypass the HTTP
+cache when checking a worker script for updates.

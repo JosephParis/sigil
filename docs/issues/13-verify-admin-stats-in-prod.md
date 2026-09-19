@@ -94,6 +94,12 @@ device was involved):
 - [ ] Mobile Chrome offers "Add to Home screen", and the installed icon is the
       maskable one rather than a cropped square
 - [ ] Run Lighthouse and confirm the PWA installability checks pass
+- [ ] **Service worker update path (issue 35), before inviting anyone:** load
+      the live site, deploy any change, reload once (the new worker installs and
+      waits), close every sigildeck.com tab, reopen: the new build's stamp must
+      show without clearing site data. A stale-shell bug cannot be fixed by
+      deploying, so this is the one to check first. Also confirm DevTools >
+      Application shows `sw.js` active and Chrome now offers install.
 
 Carried over from issue 06:
 

@@ -63,6 +63,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/device-lab.spec.js` | dev | 4 pass |
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
+| `visual/service-worker.prod.spec.js` | prod | 4 pass |
 
 **Full suite: 722 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
 **Both halves re-measured 2026-09-14** on the merge of issues 37 (partial), 34 and 32,
@@ -416,7 +417,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [19](19-robots-txt.md) | No `robots.txt` while `/admin` is live | hygiene | S | **done** |
 | [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | done |
 | [33](33-untested-api-handlers.md) | Five API handlers untested, including the one that can lose a save | testing | L | **done** |
-| [35](35-no-service-worker.md) | No service worker: manifest-only PWA, no offline play | performance | M | open |
+| [35](35-no-service-worker.md) | No service worker: manifest-only PWA, no offline play | performance | M | done |
 | [37](37-no-balance-simulator.md) | Nothing can measure the winrate targets the design doc sets | testing | L | open |
 
 ### P4 — hygiene and doc accuracy
@@ -447,7 +448,11 @@ largest-effort-first default, including an unattended run's.
 
 Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
 
-**Then, in any order:** 37 (the balance simulator), 17 (reduced motion), 35 (service worker).
+**Then, in any order:** 37 (the balance simulator), 17 (reduced motion).
+
+Issue 35 (the service worker) closed on 2026-09-19: the shell loads offline,
+and a new deploy reaches a player on their next launch. Its live check is on
+issue 13's list.
 
 Issue 34 (the analytics funnel) closed on 2026-09-10.
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { createServer } from 'node:http'
-import { readFile, stat } from 'node:fs/promises'
+import { readFile, readdir, stat } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { join, extname, normalize, sep } from 'node:path'
@@ -126,6 +126,17 @@ test('the build exists and puts index.html at the top level', async () => {
   // here is the same condition as index.html being at the zip root -- which is
   // what itch requires to offer a "Play in browser" button at all.
   await expect(stat(join(OUT_DIR, 'index.html'))).resolves.toBeTruthy()
+})
+
+test('ships no service worker', async () => {
+  // Issue 35: a root-scoped worker is wrong under itch's subdirectory, and itch
+  // serves the whole bundle anyway, so the standalone target has none.
+  await expect(stat(join(OUT_DIR, 'sw.js'))).rejects.toThrow()
+  // Nor code that would register one: the call is compiled out of this target.
+  const assets = join(OUT_DIR, 'assets')
+  for (const name of (await readdir(assets)).filter(n => n.endsWith('.js'))) {
+    expect(await readFile(join(assets, name), 'utf8'), name).not.toContain('/sw.js')
+  }
 })
 
 test('the zip uses forward-slash entry names', async () => {

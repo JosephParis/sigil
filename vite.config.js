@@ -106,7 +106,7 @@ function serviceWorker() {
       const template = await readFile(new URL('./src/sw/worker.js', import.meta.url), 'utf8')
       const worker = template
         .replace('__SW_VERSION__', `${buildSha}-${buildTime}`)
-        .replace('__SW_PRECACHE__', JSON.stringify(precacheUrls(files), null, 2))
+        .replace('const PRECACHE = __SW_PRECACHE__', 'const PRECACHE = ' + JSON.stringify(precacheUrls(files), null, 2))
       await writeFile(join(outDir, 'sw.js'), worker)
     },
   }

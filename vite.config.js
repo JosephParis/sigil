@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { execSync } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { join, relative, resolve } from 'node:path'
+import { precacheUrls } from './scripts/sw-precache.mjs'
 
 // Build stamp. Resolved once when the config loads (i.e. at build time), then
 // frozen into the client bundle via `define` below so the site can show which
@@ -76,6 +78,39 @@ function htmlStandalone() {
   }
 }
 
+// Writes dist/sw.js after the build (issue 35).
+//
+// Hand-written rather than vite-plugin-pwa: the worker is ~50 lines in
+// src/sw/worker.js and this is the whole of its build step. It runs after
+// public/ has been copied, so the precache list is the real output directory
+// (hashed bundles, fonts, icons) filtered by scripts/sw-precache.mjs.
+//
+// The version is the build stamp, so every deploy yields a byte-different
+// sw.js, which is what makes the browser install the new worker.
+//
+// Not in the standalone build: itch serves the bundle from a subdirectory on
+// its own origin and ships the whole thing anyway, so a worker there has
+// nothing to add and a root scope to get wrong.
+function serviceWorker() {
+  let outDir
+  return {
+    name: 'sigil-service-worker',
+    apply: (_config, { command }) => command === 'build' && !isStandalone,
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
+    async closeBundle() {
+      const files = (await readdir(outDir, { recursive: true, withFileTypes: true }))
+        .filter(d => d.isFile())
+        .map(d => relative(outDir, join(d.parentPath ?? d.path, d.name)))
+      const template = await readFile(new URL('./src/sw/worker.js', import.meta.url), 'utf8')
+      const worker = template
+        .replace('__SW_VERSION__', `${buildSha}-${buildTime}`)
+        .replace('__SW_PRECACHE__', JSON.stringify(precacheUrls(files), null, 2))
+      await writeFile(join(outDir, 'sw.js'), worker)
+    },
+  }
+}
 
 // The device lab (visual/lab/index.html), served at /lab.
 //
@@ -124,7 +159,7 @@ export default defineConfig({
   // /html/<project-id>/, and an absolute base would send every asset request to
   // the portal's root.
   base: isStandalone ? './' : '/',
-  plugins: [react(), tailwindcss(), htmlSiteUrl(), htmlStandalone(), deviceLab()],
+  plugins: [react(), tailwindcss(), htmlSiteUrl(), htmlStandalone(), deviceLab(), serviceWorker()],
   define: {
     // Override entries on import.meta.env so client code reads them with no
     // extra globals and ESLint stays happy. Values are inlined at build time.

@@ -106,6 +106,16 @@ function Root() {
   )
 }
 
+// The offline shell (issue 35). Production only: the worker is written by the
+// build and does not exist under `vite dev`. Never in the standalone build,
+// which has no sw.js either (see serviceWorker() in vite.config.js).
+// Registered after load so it never competes with the first paint.
+if (import.meta.env.PROD && !IS_STANDALONE && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Root />

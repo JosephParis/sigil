@@ -36,6 +36,10 @@ dist-itch.zip
 # of the project, so it must never be committed (see issue 22).
 DAWN-SUMMARY.md
 
+# Screenshots of the branch, taken by `npm run dawn:shots` for the morning
+# email. Same reasoning as DAWN-SUMMARY.md: generated evidence about a run.
+.dawn-shots/
+
 .vercel
 
 .env

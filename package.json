@@ -13,6 +13,7 @@
     "icons": "node scripts/generate-icons.mjs",
     "fonts": "node scripts/fetch-fonts.mjs",
     "itch:shots": "node scripts/itch-screenshots.mjs",
+    "dawn:shots": "node scripts/dawn-shots.mjs",
     "itch:publish": "node scripts/itch-publish.mjs",
     "test": "vitest run && playwright test",
     "test:unit": "vitest run",

@@ -416,8 +416,8 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [19](19-robots-txt.md) | No `robots.txt` while `/admin` is live | hygiene | S | **done** |
 | [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | done |
 | [33](33-untested-api-handlers.md) | Five API handlers untested, including the one that can lose a save | testing | L | **done** |
-| [35](35-no-service-worker.md) | No service worker: manifest-only PWA, no offline play | performance | M | open |
-| [37](37-no-balance-simulator.md) | Nothing can measure the winrate targets the design doc sets | testing | L | open |
+| [35](35-no-service-worker.md) | No service worker: manifest-only PWA, no offline play | performance | M | declined |
+| [37](37-no-balance-simulator.md) | Nothing can measure the winrate targets the design doc sets | testing | L | declined |
 
 ### P4 — hygiene and doc accuracy
 
@@ -433,8 +433,13 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Seven issues are open. This section is the ordering rule — it beats any
-largest-effort-first default, including an unattended run's.
+Four issues are open: 11, 12, 13 and 17. This section is the ordering rule —
+it beats any largest-effort-first default, including an unattended run's.
+
+**35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and
+scrapped unmerged. Do not pick them, reopen them, or do work whose purpose is to
+unblock them. Where the dependency graph below still draws them, read it as
+history.
 
 **Do these before strangers arrive, in this order:**
 
@@ -447,7 +452,8 @@ largest-effort-first default, including an unattended run's.
 
 Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
 
-**Then, in any order:** 37 (the balance simulator), 17 (reduced motion), 35 (service worker).
+**Then:** 17 (reduced motion). ~~37 (the balance simulator)~~ and ~~35 (service
+worker)~~ were declined on 2026-09-20.
 
 Issue 34 (the analytics funnel) closed on 2026-09-10.
 
@@ -477,18 +483,12 @@ rather than approximate them:
 
 ### The standing pick for a long unattended window
 
-**37** (the balance simulator, effort L). Issue 33 held this slot and closed on
-2026-09-02; every API handler now has tests.
+**None.** 37 held this slot until it was declined on 2026-09-20; do not pick
+it. Of the four open issues, **17 is the only one an unattended run may take**
+— 11 and 13 need a person and 12 is gated on 11. Once 17 closes, an unattended
+run has nothing eligible here and should say so rather than invent work.
 
-**37 is interruption-safe the same way 33 was** — the run loop,
-then the random policy, then the greedy one, then the report, then the baseline,
-each worth having alone. It stays second because 33 guards a player's saved
-progress and 37 guards a number. **Whether 37 should take this slot before batch
-1 is Joey's call, not an agent's** — the case for promoting it is that balance is
-what batch 1 actually experiences, and the measurement is worth much less after
-they have played.
-
-Issue 15 held this slot until it closed on 2026-08-30. Do not pick it again.
+Issues 15 and 33 held this slot before 37 and are closed. Do not pick them again.
 
 ## Dependencies
 

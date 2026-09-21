@@ -4,8 +4,10 @@ title: "No service worker: the PWA is manifest-only and the offline-first game n
 priority: P3
 area: performance
 effort: M
-status: open
+status: declined
 ---
+
+> **Declined 2026-09-20 (Joey).** Not wanted. An unattended run built this on `dawn/2026-09-19` (PR 20) and it was scrapped unmerged. Do not pick this issue, reopen it, or build toward it -- including as a dependency of 13.
 
 ## Problem
 

@@ -4,8 +4,10 @@ title: "Nothing can measure the winrate targets the design doc sets"
 priority: P3
 area: testing
 effort: L
-status: in-progress
+status: declined
 ---
+
+> **Declined 2026-09-20 (Joey).** Not wanted. A follow-up pass on `dawn/2026-09-17` (PR 19) was scrapped unmerged; the partial work merged on 2026-09-14 stays where it is but is not to be extended. Do not pick this issue, reopen it, or build toward it -- including as a dependency of 34.
 
 ## Problem
 

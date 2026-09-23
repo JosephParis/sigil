@@ -4,7 +4,7 @@ title: "No prefers-reduced-motion support despite ~20 animations, 4 of them infi
 priority: P3
 area: accessibility
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -69,7 +69,34 @@ nothing important became invisible.
 
 ## Acceptance criteria
 
-- [ ] `prefers-reduced-motion: reduce` block present in `src/index.css`
-- [ ] All four infinite animations stop under the setting
-- [ ] Low HP, boss cards, and tutorial focus remain clearly indicated without motion
-- [ ] A full run is playable and comprehensible with reduced motion enabled
+- [x] `prefers-reduced-motion: reduce` block present in `src/index.css`
+- [x] All four infinite animations stop under the setting
+- [x] Low HP, boss cards, and tutorial focus remain clearly indicated without motion
+- [x] A full run is playable and comprehensible with reduced motion enabled
+
+## Resolution (2026-09-23)
+
+The blunt block from the suggested fix is at the end of `src/index.css`, with
+durations at 0.01ms rather than `animation: none`, because the HP flash, weapon
+snap and sigil flourish each clear their own state on `animationend`; with no
+animation that event never fires and the red HP overlay would stay up.
+
+Three exemptions and four static stand-ins sit inside the same block:
+
+- **HP flash** keeps its 0.45s fade. It is a color change, not movement, and it
+  is how damage versus healing reads.
+- **`animate-spin`** keeps spinning. A frozen loading spinner looks like a hang.
+- **`criticalPulse`** is held at its brightest glow plus a pale ring.
+- **`cardBossGlow`** is held at its peak glow plus a 2px gold ring.
+- **`tutorialPulse`** is held as a full-strength 3px ring.
+- **`runePulse`** is held at rest (decorative).
+
+The tutorial's bouncing arrow stops in place and stays visible.
+
+Tests: `visual/reduced-motion.spec.js` asserts, under emulated reduced motion,
+that the critical HP bar, boss card, rune pulse and tutorial cue each stop and
+keep a non-empty box-shadow, that nothing else in a seeded room is still looping,
+and that without the setting the pulse still runs. `tutorial-walkthrough.spec.js`
+now plays the whole curated walk twice, once with reduced motion on, and must
+reach the win both times. That walk is the "full run playable" criterion; a
+manual pass with the Windows setting was not done.

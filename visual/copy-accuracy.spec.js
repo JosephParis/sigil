@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { assignedNameFor } from '../src/games/scoundrel/assignedName.js'
+import { BOONS, UNLOCKABLE_BOON_IDS } from '../src/games/scoundrel/boons.js'
+import { THEMES } from '../src/games/scoundrel/themes.js'
 
 // Player-facing copy that makes a promise the code has to keep (issues 14, 25).
 //
@@ -253,5 +255,57 @@ test.describe('rules copy matches the post-rework game', () => {
     await page.goto('/')
     await page.getByRole('button', { name: 'How to play' }).first().click()
     await expect(page.getByText(/44-card/i)).toHaveCount(0)
+  })
+})
+
+// -- Issue 12: the Boons and Trials reference tabs ---------------------------
+//
+// Both lists are derived from the game's own tables rather than typed out, so a
+// new Boon or Trial is held to the same rule without touching this file. The
+// expectations are computed under the default flags, which is what a player
+// gets: no special monsters, so no experimental Trials.
+
+async function openRulesTab(page, name) {
+  await seed(page)
+  await page.goto('/')
+  await page.getByRole('button', { name: 'How to play' }).first().click()
+  const modal = page.locator('.panel', { has: page.getByRole('button', { name: 'Close rules' }) })
+  // The sanctuary has its own "Boons" button behind the overlay.
+  await modal.getByRole('button', { name, exact: true }).click()
+  return modal
+}
+
+test.describe('rules reference tabs', () => {
+  test('the Boons tab names every Boon a run can offer', async ({ page }) => {
+    const modal = await openRulesTab(page, 'Boons')
+    await expect(modal).toContainText(/Pick 1 of 3 each sanctuary visit/)
+    for (const id of UNLOCKABLE_BOON_IDS) {
+      await expect(modal.getByText(BOONS[id].name, { exact: true })).toBeVisible()
+    }
+    // A disabled Boon is never offered, so it must not be described either.
+    for (const b of Object.values(BOONS).filter(b => b.disabled)) {
+      await expect(modal.getByText(b.name, { exact: true })).toHaveCount(0)
+    }
+  })
+
+  test('the Trials tab lists only Trials the dungeon can roll', async ({ page }) => {
+    const modal = await openRulesTab(page, 'Trials')
+    const rollable = Object.values(THEMES).filter(t => !t.experimental && t.id !== 'tutorial')
+    for (const t of rollable) {
+      await expect(modal.getByText(t.name, { exact: true }).first()).toBeVisible()
+    }
+    for (const t of Object.values(THEMES).filter(t => t.experimental)) {
+      await expect(modal.getByText(t.name, { exact: true })).toHaveCount(0)
+    }
+    // Untiered like The Quiet, but only a first run plays it; it must not be
+    // filed under the descent every run opens on.
+    await expect(modal.getByText('Tutorial', { exact: true })).toHaveCount(0)
+    // The Stillery is Tier 1 and changes a rule, so the band cannot say none do.
+    await expect(modal).not.toContainText(/no rule changes/i)
+  })
+
+  test('the Card library stays parked', async ({ page }) => {
+    const modal = await openRulesTab(page, 'Boons')
+    await expect(modal.getByRole('button', { name: 'Card library' })).toHaveCount(0)
   })
 })

@@ -45,7 +45,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `test/flags.test.js` | vitest | 5 pass |
-| `visual/copy-accuracy.spec.js` | dev | 16 pass |
+| `visual/copy-accuracy.spec.js` | dev | 19 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
 | `visual/robots-and-payload.spec.js` | dev | 10 pass |
@@ -65,7 +65,9 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 727 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Full suite: 727 unit + 202 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-10-05** on issue 12 (+3 e2e in `copy-accuracy.spec.js`, now
+19), clean in one pass with lint and build.
 **Re-measured 2026-10-05** on issue 11 (+5 unit, `test/flags.test.js`). The
 loaded full run saw the two `device-lab` tests fail again (4/4 alone) and one
 `feedback.handler` test fail once (13/13 alone, then the unit half green three
@@ -172,7 +174,8 @@ all six tables, and the suite now holds it to the DDL in `api/`), **24** (one
 CI workflow owns the mobile suite; the full suite runs nightly and on demand
 rather than only on main), **34** (the analytics funnel sees the tutorial, the
 Forge and boon choices, and every descent exit; decided in a pure, tested tracker),
-**11** (flag defaults kept as shipped — batch 1 is a qualitative pass on `0.4`).
+**11** (flag defaults kept as shipped — batch 1 is a qualitative pass on `0.4`),
+**12** (Boons and Trials reference tabs restored and audited; Card library parked).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -405,7 +408,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | # | Issue | Area | Effort | Status |
 |---|---|---|---|---|
 | [11](11-feature-flag-defaults.md) | Decide feature flag defaults (6 of 7 off) | product | S | **done** |
-| [12](12-unreachable-glossary-and-card-library.md) | Card library + Boons/Trials glossary unreachable | product | S | open |
+| [12](12-unreachable-glossary-and-card-library.md) | Card library + Boons/Trials glossary unreachable | product | S | **done** |
 | [13](13-verify-admin-stats-in-prod.md) | Verify `/api/stats` + `/admin` in prod before inviting anyone | product | S | open |
 | [14](14-anonymous-handle-copy-mismatch.md) | **BUG** UI promises "Anonymous" listing; server excludes it | bug | S | **done** |
 | [27](27-save-reset-outside-crash-path.md) | No save reset for a run stuck without crashing | product | S | **done** |
@@ -439,7 +442,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Three issues are open: 12, 13 and 17. This section is the ordering rule —
+Two issues are open: 13 and 17 (17 is built, on PR #21). This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 
 **35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and
@@ -451,9 +454,9 @@ history.
 
 1. **13** — the production verification pass. **Needs a person** (see below).
 2. ~~**11**~~ then **12** — 11 is **done** (2026-10-05): every default ships
-   unchanged, `0.4` stays live, pinned by `test/flags.test.js`. **12 is now
-   open to an agent.** Its tabs were never behind the `library` flag — that
-   flag is the Boon unlock system — so nothing gates 12 but its own audit.
+   unchanged, `0.4` stays live, pinned by `test/flags.test.js`. ~~**12**~~ is **done** too:
+   the Boons and Trials tabs are back, audited; the Card library stays parked
+   by decision until bosses and special monsters ship.
 3. ~~**31** then **30**~~ — both **done** (2026-09-06). The profile shape is
    held in agreement by `test/profileShape.test.js`, and the leaderboard name
    now rides the synced profile, so one account is one player on every device.

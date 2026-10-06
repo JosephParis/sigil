@@ -15,7 +15,7 @@ export function HomeView({ open, onResume, onOpenRules, onOpenHistory, onOpenLea
   // threaded in from index.jsx.
   const items = [
     { label: 'Resume', hint: 'Back to your run', onClick: onResume, accent: true },
-    { label: 'How to play', hint: 'The rules', onClick: onOpenRules },
+    { label: 'How to play', hint: 'Rules, boons, trials', onClick: onOpenRules },
     { label: 'Run history', hint: 'Past descents', onClick: onOpenHistory },
     // The leaderboard is served by /api, which the standalone build cannot
     // reach (see src/buildTarget.js). An entry that always opens an empty modal

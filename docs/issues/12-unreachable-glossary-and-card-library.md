@@ -4,7 +4,8 @@ title: "Card library and the Boons/Trials glossary are built but unreachable"
 priority: P2
 area: product
 effort: S
-status: open
+status: done
+branch: issue-12-reference-tabs
 ---
 
 ## Problem
@@ -52,13 +53,48 @@ the shipped kit model before launch.
    flag defaults to `false` — issue 11 covers turning it on.
 4. Un-skip the `card-library` visual test and regenerate its snapshot.
 
+## Decision and resolution (Joey, 2026-10-05)
+
+**Boons and Trials come back; the Card library stays parked.** The tabs were
+not parked as stale -- `15e3a0a` parked them "while we decide whether 'How to
+play' should carry reference material at all", and `6b836bd` parked the library
+because under the default flags it renders only the Forge inscriptions, which
+the Forge describes where they are offered. With issue 11 keeping bosses and
+special monsters off, a batch-1 player meets no trait and no boss, so the gap
+this issue was opened for is the Boon one: offered by name, never explained
+again.
+
+Audit against the game, both tabs:
+
+- **Boons** -- accurate. "Pick 1 of 3" is A0's `boonOfferCount` (`ascensions.js:72`),
+  rolled on every return (`lifecycle.js:511`); "biases toward tags you've taken
+  less" is the `1 / (1 + tagCount)` weight (`boons.js:269`). The tab lists every
+  non-disabled Boon, which with `library` off is exactly the offer pool. No
+  `Strike` or deck-editing copy.
+- **Trials** -- two defects fixed. Filing untiered Trials under "Descent 1
+  (always)" put **Tutorial** ("A short walkthrough.") there beside The Quiet;
+  it is now excluded. Tier 1's blurb said "no rule changes", but The Stillery
+  makes a room's second potion hurt; it now reads "at most a light twist".
+- The Home menu's "How to play" hint is "Rules, boons, trials" again.
+
+Tests: `visual/copy-accuracy.spec.js` gains three, deriving the expected lists
+from `BOONS` and `THEMES` -- every offerable Boon named and no disabled one,
+every rollable Trial listed and no experimental one or Tutorial, no "no rule
+changes", and no Card library tab. The Tutorial assertion was checked to fail
+with the old filter. `screens.spec.js` shoots each tab again.
+
 ## Acceptance criteria
 
-- [ ] Boons, Trials, and Card library tabs reachable from the rules modal
-- [ ] Card library reachable from both `HomeView` and `TopBar`
-- [ ] All content verified against the post-rework game; no `Strike` or whole-deck-editing references
-- [ ] `card-library` visual test un-skipped and passing
-- [ ] A new player can look up any trait or inscribed frame they encounter
+- [x] Boons and Trials tabs reachable from the rules modal. Card library tab
+      **not**, by decision
+- [ ] ~~Card library reachable from both `HomeView` and `TopBar`~~ -- stays
+      parked by decision; restore with bosses/special monsters
+- [x] All content verified against the post-rework game; no `Strike` or whole-deck-editing references
+- [ ] ~~`card-library` visual test un-skipped and passing~~ -- stays skipped
+      with the library; the known skip in the baseline is now owned by that
+      decision rather than open work
+- [x] A new player can look up any trait or inscribed frame they encounter --
+      batch 1 meets no traits; inscriptions are described in the Forge
 
 ## Unblocked by issue 11 (2026-10-05)
 

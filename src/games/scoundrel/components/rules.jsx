@@ -58,15 +58,15 @@ export function RulesInlinePanel({ onOpenFull }) {
 
 // -- Rules modal -------------------------------------------------------
 
-// TEMPORARY: the Boons / Trials / Card library tabs are parked while we decide
-// whether "How to play" should carry reference material at all. Re-enable by
-// uncommenting the three entries below; the panels they render are untouched
-// (see RulesModal). Card library also lives in the overflow menu, so nothing
-// here is the sole route to its content.
+// Boons and Trials came back for the playtest (issue 12): a Boon is offered by
+// name and nothing else says what it does once the offer is gone. Card library
+// stays parked -- with bosses and special monsters off it renders only the
+// Forge inscriptions, which the Forge already describes. Re-enable by
+// uncommenting its entry; the panel is untouched (see RulesModal).
 const RULES_TABS = [
   { id: 'rules', label: 'How to play' },
-  // { id: 'boons', label: 'Boons' },
-  // { id: 'themes', label: 'Trials' },
+  { id: 'boons', label: 'Boons' },
+  { id: 'themes', label: 'Trials' },
   // { id: 'library', label: 'Card library' },
 ]
 
@@ -347,7 +347,7 @@ function BoonsGlossary() {
 // (tens → jacks → queens → kings → aces). Labels escalate in intensity.
 const TIER_META = {
   opening: { label: 'Descent 1 (always)', blurb: 'Friendly warm-up; first descent of every run.' },
-  1: { label: 'Tier 1: Gentle', blurb: 'Extra cards stocked into the deck, no rule changes (tens).' },
+  1: { label: 'Tier 1: Gentle', blurb: 'Extra cards stocked into the deck, at most a light twist (tens).' },
   2: { label: 'Tier 2: Light', blurb: 'Single deck bias or mild debuff (jacks).' },
   3: { label: 'Tier 3: Heavy', blurb: 'Rule changes and harder bias (queens).' },
   4: { label: 'Tier 4: Severe', blurb: 'Stronger rules that reshape the room (kings).' },
@@ -356,7 +356,8 @@ const TIER_META = {
 
 function ThemesGlossary() {
   const all = getVisibleThemes()
-  const opening = all.filter(t => !t.tier)
+  // Untiered also covers the tutorial, which only a first run ever plays.
+  const opening = all.filter(t => !t.tier && t.id !== 'tutorial')
   const byTier = [1, 2, 3, 4, 5].map(n => all.filter(t => t.tier === n))
   const deeperEmpty = byTier.slice(1).every(group => group.length === 0)
   return (

@@ -63,8 +63,7 @@ test('home-menu', async ({ page }) => {
   await page.screenshot({ path: shot('home-menu'), fullPage: true })
 })
 
-// The Boons / Trials / Card library tabs are parked, so this covers the rules
-// content alone. Restore the per-tab shots alongside the tabs themselves.
+// One shot per rules tab. Card library is still parked, so it has no tab here.
 test('rules', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'How to play' }).first().click()
@@ -73,6 +72,15 @@ test('rules', async ({ page }) => {
   await page.getByRole('button', { name: 'Close rules' }).waitFor()
   await settle(page)
   await page.screenshot({ path: shot('rules-howto'), fullPage: true })
+
+  // The sanctuary has its own "Boons" button, so scope the tabs to the modal.
+  const modal = page.locator('.panel', { has: page.getByRole('button', { name: 'Close rules' }) })
+  await modal.getByRole('button', { name: 'Boons', exact: true }).click()
+  await settle(page)
+  await page.screenshot({ path: shot('rules-boons'), fullPage: true })
+  await modal.getByRole('button', { name: 'Trials', exact: true }).click()
+  await settle(page)
+  await page.screenshot({ path: shot('rules-trials'), fullPage: true })
 })
 
 // Parked with the Card library entry points in TopBar and HomeView. The modal

@@ -60,6 +60,22 @@ the shipped kit model before launch.
 - [ ] `card-library` visual test un-skipped and passing
 - [ ] A new player can look up any trait or inscribed frame they encounter
 
+## Unblocked by issue 11 (2026-10-05)
+
+Step 3 above is wrong about the flag: `library` is the Boon *unlock* system, not
+this UI, and nothing gates these tabs but the comments. Issue 11 kept every
+gameplay flag off except `customCards`, which narrows the job:
+
+- `CardLibraryContent` hides its boss and trait sections while `bosses` and
+  `specialMonsters` are off (`cardLibrary.jsx:53-55`). Batch 1 cannot meet a
+  boss or a trait, so the criterion "look up any trait" holds trivially for
+  them. The inscriptions section shows, because `customCards` is on, so audit
+  that one.
+- The **Trials** tab will not list Trials that never roll: reference UI goes
+  through `getVisibleThemes()` (`themes.js:479`), which drops the experimental
+  pool while `specialMonsters` is off. Confirm the tab really calls it when it
+  comes back.
+
 ## Inherited from issue 25 (2026-08-22)
 
 Issue 25's copy audit closed, and handed this one the part that depends on the

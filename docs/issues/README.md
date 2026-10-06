@@ -44,6 +44,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/profileShape.test.js` | vitest | 16 pass |
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
+| `test/flags.test.js` | vitest | 5 pass |
 | `visual/copy-accuracy.spec.js` | dev | 16 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
@@ -64,7 +65,11 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 722 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Full suite: 727 unit + 199 e2e passed, 1 skipped (`card-library`, issue 12).**
+**Re-measured 2026-10-05** on issue 11 (+5 unit, `test/flags.test.js`). The
+loaded full run saw the two `device-lab` tests fail again (4/4 alone) and one
+`feedback.handler` test fail once (13/13 alone, then the unit half green three
+runs straight); both treated as flaky, neither touched by the change.
 **Both halves re-measured 2026-09-14** on the merge of issues 37 (partial), 34 and 32,
 with lint and build clean: dev 185 pass + 1 skip, prod 14 pass. Unit 697 → 722
 (37 added 9, 34 added 16). One dev run saw two `device-lab` tests fail under load;
@@ -166,7 +171,8 @@ backfill cron; unit total 578 → 652), **36** (`db/schema.sql`'s header lists
 all six tables, and the suite now holds it to the DDL in `api/`), **24** (one
 CI workflow owns the mobile suite; the full suite runs nightly and on demand
 rather than only on main), **34** (the analytics funnel sees the tutorial, the
-Forge and boon choices, and every descent exit; decided in a pure, tested tracker).
+Forge and boon choices, and every descent exit; decided in a pure, tested tracker),
+**11** (flag defaults kept as shipped — batch 1 is a qualitative pass on `0.4`).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -398,7 +404,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 | # | Issue | Area | Effort | Status |
 |---|---|---|---|---|
-| [11](11-feature-flag-defaults.md) | Decide feature flag defaults (6 of 7 off) | product | S | open |
+| [11](11-feature-flag-defaults.md) | Decide feature flag defaults (6 of 7 off) | product | S | **done** |
 | [12](12-unreachable-glossary-and-card-library.md) | Card library + Boons/Trials glossary unreachable | product | S | open |
 | [13](13-verify-admin-stats-in-prod.md) | Verify `/api/stats` + `/admin` in prod before inviting anyone | product | S | open |
 | [14](14-anonymous-handle-copy-mismatch.md) | **BUG** UI promises "Anonymous" listing; server excludes it | bug | S | **done** |
@@ -433,7 +439,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Four issues are open: 11, 12, 13 and 17. This section is the ordering rule —
+Three issues are open: 12, 13 and 17. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 
 **35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and
@@ -444,8 +450,10 @@ history.
 **Do these before strangers arrive, in this order:**
 
 1. **13** — the production verification pass. **Needs a person** (see below).
-2. **11** then **12** — the flag defaults and the reference UI they gate.
-   **11 needs a person**; 12 follows from it.
+2. ~~**11**~~ then **12** — 11 is **done** (2026-10-05): every default ships
+   unchanged, `0.4` stays live, pinned by `test/flags.test.js`. **12 is now
+   open to an agent.** Its tabs were never behind the `library` flag — that
+   flag is the Boon unlock system — so nothing gates 12 but its own audit.
 3. ~~**31** then **30**~~ — both **done** (2026-09-06). The profile shape is
    held in agreement by `test/profileShape.test.js`, and the leaderboard name
    now rides the synced profile, so one account is one player on every device.

@@ -76,8 +76,8 @@ End-to-end, against the deployed URL:
 - [ ] Open the board signed out and confirm **your own row reads "You"**. Guest
       self-marking is new (`device=` query param); it never worked before, and
       it is what makes two same-named rows survivable
-- [ ] Confirm no `deviceId` or `account_id` appears anywhere in the
-      `/api/leaderboard` response body
+- [x] Confirm no `deviceId` or `account_id` appears anywhere in the
+      `/api/leaderboard` response body -- clean on 2026-10-05, 9 entries
 - [ ] Confirm the weekly cron (`0 4 * * 1` → `/api/cron-backfill-runs`) is
       registered in Vercel and returns 200 when triggered manually
 - [ ] Sign in on a second device; confirm history merges both ways (and see issue 09)
@@ -139,7 +139,8 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
 - [ ] **Moderation (issue 08) end to end.** None of this can run locally — there
       is no `/api` in `vite dev` or `vite preview`, so the panel has never made a
       real request:
-  - [ ] `/api/moderation` returns 401 without the token and 401 with a wrong one
+  - [x] `/api/moderation` returns 401 without the token and 401 with a wrong one
+        -- verified 2026-10-05
   - [ ] The Moderation panel on `/admin` opens and lists published handles
   - [ ] Block a test account; confirm its rows leave the public board and that
         the ranking has no gap where they were
@@ -224,15 +225,47 @@ project, dated 2026-08-27.
 
 ## Measurement plan
 
-- [ ] Record the `GAME_VERSION` the window opens on, and freeze balance-affecting changes for its duration
-- [ ] Settle issue 11's flag defaults **before** the window opens
-- [ ] Note that ~1,500–2,000 runs is a lot for one small batch — decide up front whether batch 1 is a *qualitative* pass (bugs, comprehension, feel) with balance deferred to a larger batch 2. Sizing the cohort against the go point tells you which one you're running.
+- [x] Record the `GAME_VERSION` the window opens on (`0.4`), and freeze balance-affecting changes for its duration
+- [x] Settle issue 11's flag defaults **before** the window opens -- unchanged, 2026-10-05
+- [x] Note that ~1,500–2,000 runs is a lot for one small batch — decide up front whether batch 1 is a *qualitative* pass (bugs, comprehension, feel) with balance deferred to a larger batch 2. Sizing the cohort against the go point tells you which one you're running.
 
 ## Acceptance criteria
 
 - [ ] Every checklist item above verified against production, not preview
 - [ ] A screenshot or note recording that `/admin` rendered correctly with real data
-- [ ] Explicit decision on whether batch 1 is qualitative or a balance measurement
+- [x] Explicit decision on whether batch 1 is qualitative or a balance measurement
+      -- qualitative, see the decision section
+
+## Decision: batch 1 is qualitative (2026-10-05)
+
+Batch 1 is the Reddit playtest push (`docs/reddit/POSTS.md`, whose stated goal
+is playtesters and feedback). A few posts bring tens to low hundreds of runs,
+far below the ~1,500–2,000 go point, so the window is for bugs, comprehension
+and feel; balance waits for a larger batch 2. It opens on `GAME_VERSION` `0.4`
+with issue 11's defaults unchanged, so the runs already on the board are
+comparable with it. No balance freeze is imposed beyond not flipping flags.
+
+## Verified against production, 2026-10-05
+
+Unauthenticated probes of `https://sigildeck.com`, no secrets used:
+
+- `/api/moderation` -> **401** with no token and **401** with a wrong bearer
+  token. Ticks the first moderation sub-box.
+- `/api/stats` -> 401 both ways; `/api/cron-backfill-runs` -> 401 with no
+  token. The gates hold. Whether the cron is *registered* still needs the Vercel
+  dashboard (`vercel.json` declares `0 4 * * 1`; the CLI here is not logged in).
+- `/api/leaderboard` body has no `deviceId`, `device_id`, `accountId` or
+  `account_id` anywhere. Ticks that box.
+- The board has **9 real victories**, all but one on `0.4`, ending as late as
+  2026-10-03, under names that are not Joey's (`Big dog`, `Wonky bro`, ...). So
+  runs from the deployed client do reach `runs` and the board's filters let a
+  genuine win through. It cannot say whether those were guest or signed-in
+  runs, so the two write-path boxes stay open.
+- `DrownedSteward8972` (2026-10-02) has the shape of an **assigned name**
+  (`assignedName.js` concatenates the `pseudonym.js` words with a number), so
+  the default name path has reached the live board at least once. Not ticked:
+  only a run where Settings was provably never opened proves that box.
+- Two rows read Anonymous (`playerName: null`), one on `0.3`.
 
 ## Verified against production, 2026-08-22 (deploy of `2cfeb5e`)
 

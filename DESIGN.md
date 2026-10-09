@@ -262,7 +262,9 @@ A tutorial-flavoured starter-room buff (guaranteed weapon + potion in the openin
 ## 7. Meta-progression (between runs) *(historical — never built)*
 
 **None of this shipped.** There is no Memory Slot, no Codex and no daily seed in
-the game; progression is entirely within a run. The section is kept because the
+the game; progression is entirely within a run. What did ship is the piece a
+daily seed would stand on: every run has a shareable seed (issue 38), and the
+same seed plays the same dungeon for anyone who enters it. The section is kept because the
 *stance* below — no persistent stat boosts, every run a fresh dungeon — is still
 the position, and any future meta layer has to argue with it.
 

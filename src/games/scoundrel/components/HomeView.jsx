@@ -3,11 +3,12 @@
 // untouched underneath: "Resume" just closes it. Menu entries hand off to the
 // same modals the top bar opens.
 import { IS_STANDALONE, HOME_URL } from '../../../buildTarget.js'
+import { SeedLine } from './seed'
 
 // onOpenCardLibrary is still wired from index.jsx for the parked Card library
 // entry below, so it reads as unused until that entry comes back.
 // eslint-disable-next-line no-unused-vars
-export function HomeView({ open, onResume, onOpenRules, onOpenHistory, onOpenLeaderboard, onOpenCardLibrary, onReplayTutorial, onOpenCredits, onOpenSettings, onOpenFeedback }) {
+export function HomeView({ open, seed, seedChosen, onResume, onOpenRules, onOpenHistory, onOpenLeaderboard, onOpenCardLibrary, onReplayTutorial, onOpenCredits, onOpenSettings, onOpenFeedback }) {
   if (!open) return null
 
   // TEMPORARY: Card library is parked alongside the rules modal's reference
@@ -63,6 +64,11 @@ export function HomeView({ open, onResume, onOpenRules, onOpenHistory, onOpenLea
             </button>
           ))}
         </nav>
+        {seed && (
+          <div className="mt-6 flex justify-center">
+            <SeedLine seed={seed} chosen={seedChosen} />
+          </div>
+        )}
         {IS_STANDALONE && (
           <p className="mt-8 text-[11px] leading-relaxed text-slate-500">
             This copy plays entirely in your browser and saves to this device.

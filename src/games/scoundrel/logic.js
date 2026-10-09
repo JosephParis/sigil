@@ -61,6 +61,7 @@ export {
   startNewRun,
   setRunMode,
   setRunAscension,
+  setRunSeed,
   descend,
   retireRun,
   fleeRoom,

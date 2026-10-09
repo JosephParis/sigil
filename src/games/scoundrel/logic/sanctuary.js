@@ -6,6 +6,7 @@ import { isEnabled as isFlagEnabled } from '../flags'
 import { BOONS } from '../boons'
 import { getAscensionEffectsForState } from '../ascensions'
 import { BOSSES } from '../bosses'
+import { rngFor } from '../seed'
 import {
   appendLog,
   activeThemes, themeFlagAny,
@@ -171,9 +172,11 @@ export function forgeActive(state) {
 // Advance to the next non-empty grant in the batch (rolling its choices against
 // the just-edited kit), or close the forge stage when the batch is done.
 function advanceForgeGrant(state) {
+  const from = (state.forgeGrantIndex || 0) + 1
   const { forgeGrantIndex, forgeChoices } = initForgeBatch(
-    state.forgeGrants || [], state.kit, state.sigilsEarned || 0, state.rng,
-    (state.forgeGrantIndex || 0) + 1,
+    state.forgeGrants || [], state.kit, state.sigilsEarned || 0,
+    rngFor(state, `forge-choices:${state.sigilsEarned || 0}:${from}`),
+    from,
     state.forgeInscribedIds || []
   )
   return { ...state, forgeGrantIndex, forgeChoices }

@@ -30,7 +30,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/themes.test.js` | vitest | 31 pass |
 | `test/handleDenylist.test.js` | vitest | 41 pass |
 | `test/moderation.handler.test.js` | vitest | 24 pass |
-| `test/leaderboard.handler.test.js` | vitest | 22 pass |
+| `test/leaderboard.handler.test.js` | vitest | 23 pass |
 | `test/merge.profiles.test.js` | vitest | 14 pass |
 | `test/save.handler.test.js` | vitest | 14 pass |
 | `test/stats.handler.test.js` | vitest | 14 pass |
@@ -47,7 +47,9 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `test/flags.test.js` | vitest | 5 pass |
+| `test/seed.test.js` | vitest | 18 pass |
 | `visual/copy-accuracy.spec.js` | dev | 19 pass |
+| `visual/seeds.spec.js` | dev | 7 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
 | `visual/robots-and-payload.spec.js` | dev | 10 pass |
@@ -67,7 +69,10 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 727 unit + 202 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Full suite: 746 unit + 209 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-10-09** on issue 38 (+19 unit: 18 in `test/seed.test.js`,
+1 in `leaderboard.handler`; +7 e2e in `visual/seeds.spec.js`), clean in one
+pass with lint and build.
 **Re-measured 2026-10-05** on issue 12 (+3 e2e in `copy-accuracy.spec.js`, now
 19), clean in one pass with lint and build.
 **Re-measured 2026-10-05** on issue 11 (+5 unit, `test/flags.test.js`). The
@@ -415,7 +420,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [14](14-anonymous-handle-copy-mismatch.md) | **BUG** UI promises "Anonymous" listing; server excludes it | bug | S | **done** |
 | [27](27-save-reset-outside-crash-path.md) | No save reset for a run stuck without crashing | product | S | **done** |
 | [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
-| [38](38-shareable-run-seeds.md) | No shareable run seeds: two players never play the same dungeon | product | L | open |
+| [38](38-shareable-run-seeds.md) | No shareable run seeds: two players never play the same dungeon | product | L | **done** |
 
 ### P3 — quality, performance, accessibility
 
@@ -445,9 +450,8 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Three issues are open: 13, 17 (built, on PR #21) and 38. **38 needs Joey's
-answers to its "Decide first" questions before anyone builds it**, so an
-unattended run should not pick it. This section is the ordering rule —
+Two issues are open: 13 and 17 (17 is built, on PR #21). 38 (run seeds) was
+built and shipped on 2026-10-09. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 
 **35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and

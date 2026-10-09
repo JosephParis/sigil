@@ -110,6 +110,12 @@ export function buildRunRecord(state, user, handle = '', deviceId = null) {
     // build). Part of the dedupe key so two devices' guest runs can't collide
     // on a shared startedAt. Absent on legacy runs; readers fall back then.
     runSeed: state.runSeed || null,
+    // The shareable seed the run was played on (issue 38), unrelated to
+    // runSeed above despite the name. seedChosen is true when the player
+    // entered it rather than the game minting it; the leaderboard keeps those
+    // runs off the main board, since replaying a known dungeon is a head start.
+    seed: state.seed || null,
+    seedChosen: state.seedChosen === true,
     accountId: user?.sub || GUEST_ID,
     // Opt-in display name for the public leaderboard. Null unless the player
     // set a handle in Settings.

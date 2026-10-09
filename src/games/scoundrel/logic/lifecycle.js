@@ -13,6 +13,7 @@ import {
 import { buildDescentDeck, buildTutorialDeck, buildStartingKit } from './deck'
 import { rollForgeGrants, initForgeBatch } from './sanctuary'
 import { applyRoomEntryEffects } from './combat'
+import { rngFor } from '../seed'
 
 // -- Run lifecycle ------------------------------------------------------
 
@@ -37,11 +38,19 @@ export function createRun(rng = Math.random, options = {}) {
   //
   // `ascension` is the difficulty level (0 = base). Read at sanctuary,
   // descent, and combat edges via getAscensionEffectsForState.
+  //
+  // `seed` is the run's shareable seed (see seed.js). When set, every roll
+  // that should match between two players on the same seed is derived from
+  // it, and `rng` is only the fallback. `seedChosen` marks a seed the player
+  // entered rather than one the game minted, which the leaderboard keeps
+  // apart: replaying a dungeon you already know is not the same race.
   const {
     tutorial = false,
     mode = DEFAULT_MODE,
     unlockedBoons = STARTER_BOON_IDS,
     ascension = 0,
+    seed = null,
+    seedChosen = false,
   } = options
   const nextTheme = tutorial ? 'tutorial' : 'the_quiet'
 
@@ -69,6 +78,10 @@ export function createRun(rng = Math.random, options = {}) {
     carriedWeapon: null,
     carriedSpareWeapon: null,
     rng,
+    seed,
+    seedChosen: Boolean(seed) && seedChosen,
+    // Count of choice-driven rolls this descent (see playRoll in seed.js).
+    playRolls: 0,
 
     boonOffers: [],
     nextTheme,
@@ -172,6 +185,17 @@ export function setRunMode(state, modeId) {
   return { ...state, mode: modeId }
 }
 
+// Play a seed the player entered. Same window as setRunMode: nothing has been
+// rolled from the seed until the first descent, so swapping it before then
+// swaps the whole dungeon. `seed` must already be normalized (normalizeSeed).
+export function setRunSeed(state, seed) {
+  if (state.phase !== 'sanctuary') return state
+  if (state.sigilsEarned !== 0) return state
+  if (state.tutorial) return state
+  if (!seed || state.seed === seed) return state
+  return { ...state, seed, seedChosen: true }
+}
+
 // Change the run's ascension level. Same rules as setRunMode: pre-descent
 // only. Clamping to the player's actual ceiling is the caller's job.
 export function setRunAscension(state, level) {
@@ -191,6 +215,7 @@ export function descend(state) {
 
   const themeId = state.nextTheme
   const themeChildren = state.nextThemeChildren
+  const descentNo = (state.sigilsEarned || 0) + 1
   const themes = themesFor(themeId, themeChildren)
 
   // Tutorial uses a hand-curated, unshuffled deck. Everything else
@@ -202,7 +227,7 @@ export function descend(state) {
     themeLog = []
     themeDeckChanges = []
   } else {
-    const built = buildDescentDeck(state, themeId, themeChildren, state.rng)
+    const built = buildDescentDeck(state, themeId, themeChildren, rngFor(state, `deck:${descentNo}`))
     deck = built.deck.slice()
     themeLog = built.log
     themeDeckChanges = built.changes || []
@@ -214,7 +239,7 @@ export function descend(state) {
   // mute is in effect when computeMaxHp reads Iron Will / Glass Cannon.
   let mutedBoon = null
   if (themeFlagAny(themes, 'wormwood') && state.boons.length > 0) {
-    mutedBoon = state.boons[Math.floor(state.rng() * state.boons.length)]
+    mutedBoon = state.boons[Math.floor(rngFor(state, `wormwood:${descentNo}`)() * state.boons.length)]
   }
   const muteState = mutedBoon ? { ...state, mutedBoon } : state
   const maxHp = computeMaxHp(muteState, themeId, themeChildren)
@@ -312,6 +337,7 @@ export function descend(state) {
     pendingCursedHeal: 0,
     mapPeek: null,
     lastKilledMonsterRanks: [],
+    playRolls: 0,
     log: [baseLine, ...themeLog],
   }
 
@@ -454,7 +480,8 @@ export function endDescentVictory(state) {
 
   const newSigils = state.sigilsEarned + 1
 
-  const rng = state.rng
+  // Each roll below takes its own stream on a seeded run (see seed.js), so the
+  // next theme and the offers do not depend on what the player unlocked.
   // Discovery: each sigil earned permanently unlocks one random Boon from
   // the locked pool, if any are still locked. The unlock applies even in
   // Hardcore (no offers seen this run, but the library grows for next time)
@@ -465,7 +492,7 @@ export function endDescentVictory(state) {
   let nextLibrary = currentLibrary
   let discoveredBoonId = null
   if (stillLocked.length > 0) {
-    discoveredBoonId = stillLocked[Math.floor(rng() * stillLocked.length)]
+    discoveredBoonId = stillLocked[Math.floor(rngFor(state, `discover:${newSigils}`)() * stillLocked.length)]
     nextLibrary = currentLibrary.concat(discoveredBoonId)
   }
 
@@ -502,20 +529,20 @@ export function endDescentVictory(state) {
   // Passing the whole list keeps a Trial from coming back later in the run,
   // not merely on the next descent. The Long Night's children are picked
   // separately and are not constrained by it.
-  const nextTheme = mode.lockTheme || pickThemeId(rng, newSigils + asc.themeTierOffset, state.themesFaced)
-  const nextThemeChildren = resolveThemeChildren(nextTheme, rng)
+  const nextTheme = mode.lockTheme || pickThemeId(rngFor(state, `theme:${newSigils}`), newSigils + asc.themeTierOffset, state.themesFaced)
+  const nextThemeChildren = resolveThemeChildren(nextTheme, rngFor(state, `theme-children:${newSigils}`))
   // Library flag off: every Boon is available, the per-player unlocked set
   // is ignored. Discoveries still get appended to state (cheap, and the
   // library stays warm in case the flag flips back on later).
   const offerPool = isFlagEnabled('library') ? nextLibrary : UNLOCKABLE_BOON_IDS
-  const boonOffers = mode.noBoons ? [] : pickBoonOffers(state.boons, asc.boonOfferCount, rng, offerPool)
+  const boonOffers = mode.noBoons ? [] : pickBoonOffers(state.boons, asc.boonOfferCount, rngFor(state, `boons:${newSigils}`), offerPool)
   const boonChosen = mode.noBoons // no boon to pick in modes that skip offers
   const forgeOpen = !mode.noForge && forgeSigilSet.has(newSigils)
   // When the forge opens, roll the visit's granted edit batch and the first
   // edit's card choices. Empty when the forge is closed.
-  const forgeGrants = forgeOpen ? rollForgeGrants(state.kit, newSigils, rng) : []
+  const forgeGrants = forgeOpen ? rollForgeGrants(state.kit, newSigils, rngFor(state, `forge:${newSigils}`)) : []
   const { forgeGrantIndex, forgeChoices } = forgeGrants.length > 0
-    ? initForgeBatch(forgeGrants, state.kit, newSigils, rng)
+    ? initForgeBatch(forgeGrants, state.kit, newSigils, rngFor(state, `forge-choices:${newSigils}:0`))
     : { forgeGrantIndex: 0, forgeChoices: [] }
 
   let returned = {

@@ -104,6 +104,15 @@ describe('GET /api/leaderboard — moderation', () => {
     expect(ranked.text).toContain('dev is not true')
     expect(ranked.text).toContain("playerName")
   })
+
+  it('keeps runs on an entered seed off the main board', async () => {
+    await get()
+    // Issue 38: replaying a known seed is a head start, so those runs do not
+    // race fresh ones. Inside the ranked subquery, for the same reason as the
+    // blocklist: filtering afterwards would leave holes in the ranking.
+    const ranked = rankedFragments()[0]
+    expect(ranked.text).toContain("coalesce(r.record->>'seedChosen', 'false') <> 'true'")
+  })
 })
 
 describe('GET /api/leaderboard — response', () => {

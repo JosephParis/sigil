@@ -129,6 +129,11 @@ function rankedBest(versionCond) {
       from runs r
       where r.outcome = 'victory'
         and r.dev is not true
+        -- A run on a seed the player entered (issue 38) replays a dungeon they
+        -- may already know, which is a head start over a fresh run. Those race
+        -- each other on the seed, not on this board. A legacy row has no
+        -- seedChosen and reads as a fresh run.
+        and coalesce(r.record->>'seedChosen', 'false') <> 'true'
         -- Moderation blocklist. Applied inside the ranked subquery so a blocked
         -- account is gone before row_number() runs: removing it afterwards
         -- would leave a hole in the ranking where their row used to be.

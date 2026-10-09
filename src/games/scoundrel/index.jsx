@@ -24,6 +24,8 @@ import { useRunAnalytics } from './analytics'
 import { isDevToolsEnabled, isCrashTestRequested } from './flags'
 import { audio } from './audio'
 import { settings } from './settings'
+import { newSeed, normalizeSeed, formatSeed } from './seed'
+import { GAME_VERSION } from './constants'
 
 // -- Save / load -------------------------------------------------------
 // Bump SAVE_VERSION whenever the shape of game state in logic.js changes
@@ -181,12 +183,73 @@ function markTutorialCompleted() {
 // whether the player has finished it before. Seeds the new run's Boon
 // library from localStorage so unlocks persist across runs. Ascension
 // starts at 0 each run; the player picks on the opening visit.
-function freshRun() {
+//
+// Every run gets a seed (issue 38). A minted one plays exactly like the old
+// Math.random run did; `sharedSeed` is one the player arrived with, from a
+// friend's link, which skips the tutorial: the tutorial is curated and cannot
+// be seeded, and a friend's dungeon is what they came for.
+function freshRun(sharedSeed = null) {
   return createRun(Math.random, {
-    tutorial: !tutorialAlreadyCompleted(),
+    tutorial: sharedSeed ? false : !tutorialAlreadyCompleted(),
     unlockedBoons: loadLibrary(),
     ascension: 0,
+    seed: sharedSeed || newSeed(),
+    seedChosen: Boolean(sharedSeed),
   })
+}
+
+// A shared link: /?seed=K7Q2-M9XD&v=0.4. Read once per page load and taken out
+// of the address bar, so a reload does not try to start the run again. Cached
+// at module scope because StrictMode runs state initializers twice, and the
+// second read would find the address bar already cleaned. Other params (the
+// ?flag-<id> overrides) are left where they are.
+let launchLink
+function takeLaunchLink() {
+  if (launchLink !== undefined) return launchLink
+  launchLink = null
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const raw = params.get('seed')
+    if (raw === null) return launchLink
+    launchLink = { seed: normalizeSeed(raw), version: params.get('v') }
+    params.delete('seed')
+    params.delete('v')
+    const qs = params.toString()
+    window.history.replaceState(
+      window.history.state, '',
+      `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`
+    )
+  } catch {
+    // No URL to read (or a sandbox refusing replaceState): play as normal.
+  }
+  return launchLink
+}
+
+// The run to open on, and anything the player should be told about the link
+// they arrived with. A shared seed replaces the saved run only when that run
+// has nothing to lose -- none, finished, or still on its opening visit.
+// Otherwise the run in progress wins and the player is told how to play the
+// seed later, rather than a link silently throwing their run away.
+function openingGame() {
+  const saved = loadSavedGame()
+  const link = takeLaunchLink()
+  if (!link) return { game: saved || freshRun(), notice: null }
+  if (!link.seed) {
+    return { game: saved || freshRun(), notice: 'That link’s seed could not be read, so this is your own dungeon.' }
+  }
+  const idle = !saved
+    || saved.phase === 'gameover' || saved.phase === 'victory'
+    || (saved.phase === 'sanctuary' && saved.sigilsEarned === 0)
+  if (!idle) {
+    return {
+      game: saved,
+      notice: `You have a run in progress, so seed ${formatSeed(link.seed)} was not started. Finish or retire this run, then enter the seed on the opening screen.`,
+    }
+  }
+  const notice = link.version && link.version !== GAME_VERSION
+    ? `This seed was shared from Sigil ${link.version}. You are on ${GAME_VERSION}, so the dungeon will not match theirs.`
+    : null
+  return { game: freshRun(link.seed), notice }
 }
 
 // -- Root --------------------------------------------------------------
@@ -198,7 +261,17 @@ export default function Scoundrel() {
   if (isCrashTestRequested()) {
     throw new Error('Deliberate crash from ?crash=1 (error boundary test hook)')
   }
-  const [game, setGame] = useState(() => loadSavedGame() || freshRun())
+  const [opening] = useState(openingGame)
+  const [game, setGame] = useState(opening.game)
+  const [seedNotice, setSeedNotice] = useState(opening.notice)
+  // The link notice is about the screen the player landed on. Once the run
+  // moves on (they descend, or finish the run they were told about) it has
+  // been read, and on a phone the descent has no room to spare for it.
+  const [noticePhase, setNoticePhase] = useState(opening.game.phase)
+  if (seedNotice && game.phase !== noticePhase) {
+    setSeedNotice(null)
+    setNoticePhase(game.phase)
+  }
   const [user, setUser] = useState(() => loadUser())
   const [ascensionUnlocked, setAscensionUnlocked] = useState(() => loadAscensionUnlocked())
   const [rulesOpen, setRulesOpen] = useState(false)
@@ -478,7 +551,7 @@ export default function Scoundrel() {
   }, [game.phase, rulesOpen, retireOpen, creditsOpen, devOpen, tutorialReplayOpen, loginOpen, cardLibraryOpen, historyOpen, leaderboardOpen, homeOpen, settingsOpen, feedbackOpen, openHome])
 
   const confirmReplayTutorial = () => {
-    setGame(createRun(Math.random, { tutorial: true, unlockedBoons: loadLibrary() }))
+    setGame(createRun(Math.random, { tutorial: true, unlockedBoons: loadLibrary(), seed: newSeed() }))
     setTutorialReplayOpen(false)
     setHomeOpen(false)
   }
@@ -488,7 +561,7 @@ export default function Scoundrel() {
   // the player into a real opening run (The Quiet).
   const skipTutorial = () => {
     markTutorialCompleted()
-    setGame(createRun(Math.random, { tutorial: false, unlockedBoons: loadLibrary() }))
+    setGame(createRun(Math.random, { tutorial: false, unlockedBoons: loadLibrary(), seed: newSeed() }))
   }
 
   const confirmRetire = () => {
@@ -556,6 +629,8 @@ export default function Scoundrel() {
       />
       <HomeView
         open={homeOpen}
+        seed={game.tutorial ? null : game.seed}
+        seedChosen={game.seedChosen}
         onResume={resumeHome}
         onOpenRules={() => setRulesOpen(true)}
         onOpenHistory={() => setHistoryOpen(true)}
@@ -567,6 +642,12 @@ export default function Scoundrel() {
         onOpenFeedback={() => setFeedbackOpen(true)}
       />
       <main className="flex-1 w-full max-w-7xl px-4 sm:px-6 pt-16 short:pt-14 sm:pt-20 pb-4 short:pb-2 sm:pb-8">
+        {seedNotice && (
+          <div role="status" data-testid="seed-notice" className="panel p-3 mb-4 flex items-start justify-between gap-3 text-[12px] text-slate-300">
+            <span>{seedNotice}</span>
+            <button onClick={() => setSeedNotice(null)} aria-label="Dismiss" className="text-slate-500 hover:text-parchment transition">✕</button>
+          </div>
+        )}
         {game.phase === 'sanctuary' && <SanctuaryView game={game} setGame={setGame} onSkipTutorial={skipTutorial} ascensionUnlocked={ascensionUnlocked} celebrateSigil={sigilCelebrate} onSigilCelebrated={() => setSigilCelebrate(false)} onOpenRules={() => setRulesOpen(true)} />}
         {game.phase === 'descent' && <DescentView game={game} setGame={setGame} />}
         {(game.phase === 'gameover' || game.phase === 'victory') && (

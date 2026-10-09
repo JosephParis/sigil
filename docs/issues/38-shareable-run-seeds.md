@@ -4,8 +4,46 @@ title: "No shareable run seeds: two players can never play the same dungeon"
 priority: P2
 area: product
 effort: L
-status: open
+status: done
+branch: issue-38-run-seeds
 ---
+
+## Resolution (2026-10-09)
+
+Built and shipped the same day, at Joey's call ("just build it and ship it").
+The "Decide first" questions were answered as follows:
+
+- **Live for batch 1, no flag.** Every run gets a minted seed, and a minted
+  seed plays exactly like the old `Math.random` run, so issue 11's "0.4 as
+  shipped" still holds for anyone who never touches a seed.
+- **Entered seeds stay off the main leaderboard** (`seedChosen` on the record,
+  filtered inside the ranked subquery in `api/leaderboard.js`). A per-seed
+  board belongs to the follow-up: sharing a finished run ("I won this seed in
+  14m, beat it").
+- **Same dungeon and same offers.** Boon offers and Forge rolls are seeded
+  too. Two players who choose alike see identical runs; players who choose
+  differently still get the same themes, Trials and monsters every descent,
+  but the order of the deck differs, because the kit is theirs and is shuffled
+  in with the dungeon.
+
+What shipped:
+
+- `src/games/scoundrel/seed.js`: 8-character Crockford codes, one derived
+  stream per labelled roll (`deck:3`, `boons:2`, `forge:2`, ...), and
+  `playRoll` for the choice-driven combat rolls, numbered per descent. Nothing
+  about a stream position is saved, so a reload cannot shift a roll.
+- Every gameplay roll goes through it; the Dev panel's Forge roll no longer
+  bypasses the run. Card ids still use a counter and timestamp: they are
+  labels, not part of the dungeon.
+- The opening visit shows the seed with *Copy link* and *Play a friend's
+  seed*; the pause menu and the run summary (end screen and history) show it
+  too. `/?seed=K7Q2-M9XD&v=0.4` opens that seed past the tutorial, never
+  replaces a run in progress, and says so when the version differs.
+- Not done: a `seed` column on `runs`. The seed is in the `record` blob, which
+  is enough until the per-seed board needs to query it.
+
+Tests: `test/seed.test.js` (18) and `visual/seeds.spec.js` (7), plus one in
+`test/leaderboard.handler.test.js`.
 
 ## Problem
 

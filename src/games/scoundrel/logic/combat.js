@@ -7,6 +7,7 @@ import { BOONS } from '../boons'
 import { isEnabled as isFlagEnabled } from '../flags'
 import { makeBroodSpawn, getBoss, BOSSES } from '../bosses'
 import { hasAffliction, BLEEDING_DAMAGE } from '../afflictions'
+import { playRoll } from '../seed'
 import {
   appendLog, fmt,
   activeThemes, themeFieldSum, themeFlagAny, getRoomSize,
@@ -323,8 +324,10 @@ function applyMonsterFight(state, monsterCard, index, useWeapon) {
       id: `${monsterCard.id}_carrion`,
       carrioned: true,
     }
+    const roll = playRoll(next)
+    next = roll.state
     const deck = next.deck.slice()
-    const insertAt = deck.length === 0 ? 0 : Math.floor(state.rng() * (deck.length + 1))
+    const insertAt = deck.length === 0 ? 0 : Math.floor(roll.value * (deck.length + 1))
     deck.splice(insertAt, 0, revenant)
     next = { ...next, deck }
     next = appendLog(next, `Carrion: ${fmt(monsterCard)} stirs again in the deck as ${fmt(revenant)}.`)
@@ -336,8 +339,10 @@ function applyMonsterFight(state, monsterCard, index, useWeapon) {
   if (monsterCard.boss === 'the_brood') {
     const spawn = makeBroodSpawn(monsterCard.id, monsterCard.broodStep || 0)
     if (spawn) {
+      const roll = playRoll(next)
+      next = roll.state
       const deck = next.deck.slice()
-      const insertAt = deck.length === 0 ? 0 : Math.floor(state.rng() * (deck.length + 1))
+      const insertAt = deck.length === 0 ? 0 : Math.floor(roll.value * (deck.length + 1))
       deck.splice(insertAt, 0, spawn)
       next = { ...next, deck }
       next = appendLog(next, `The Brood splits. A smaller form (${rankLabel(spawn.rank)}${SUIT_GLYPH[spawn.suit]}) slips back into the deck.`)
@@ -387,9 +392,10 @@ function applyMonsterFight(state, monsterCard, index, useWeapon) {
     const slotKey = chosen.slot === 'primary' ? 'weapon' : 'spareWeapon'
     const w = next[slotKey]
     if (w) {
-      const newRank = 2 + Math.floor(state.rng() * 9)
+      const roll = playRoll(next)
+      const newRank = 2 + Math.floor(roll.value * 9)
       next = appendLog(
-        { ...next, [slotKey]: { ...w, rank: newRank } },
+        { ...roll.state, [slotKey]: { ...w, rank: newRank } },
         `Gambler's Flail rolls anew: resets to a ${rankLabel(newRank)}♦.`
       )
     }

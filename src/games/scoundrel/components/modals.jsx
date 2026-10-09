@@ -9,6 +9,7 @@ import {
 } from '../settings'
 import { handleRejectionReason } from '../handleDenylist'
 import { nameSuggestions } from '../assignedName'
+import { rngFor } from '../seed'
 import { audio, useMuted, useMusicVolume, useSfxVolume } from '../audio'
 import { BUILD_SHA, BUILD_HREF, BUILD_TITLE } from '../../../buildInfo.js'
 import { discardSavedRun } from '../../../utils/discardRun'
@@ -461,9 +462,9 @@ export function DevModal({ open, onClose, game, setGame }) {
     setGame(g => {
       // The Forge opens after every descent (any non-opening, non-final sigil).
       const forgeOpen = sigils >= 1 && sigils < g.sigilTarget
-      const forgeGrants = forgeOpen ? rollForgeGrants(g.kit, sigils, Math.random) : []
+      const forgeGrants = forgeOpen ? rollForgeGrants(g.kit, sigils, rngFor(g, `forge:${sigils}`)) : []
       const batch = forgeGrants.length > 0
-        ? initForgeBatch(forgeGrants, g.kit, sigils, Math.random)
+        ? initForgeBatch(forgeGrants, g.kit, sigils, rngFor(g, `forge-choices:${sigils}:0`))
         : { forgeGrantIndex: 0, forgeChoices: [] }
       return {
         ...g,

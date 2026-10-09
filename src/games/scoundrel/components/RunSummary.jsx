@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { CardSuitFan } from './forge'
 import { BoonName } from './boons'
 import { BOONS, THEMES, getTheme } from '../logic'
+import { SeedLine } from './seed'
 
 // Presentational view of one stored run record. Reused by the end-of-run
 // screen (OutcomeView) and the expanded row in the history modal. Mechanical
@@ -169,7 +170,7 @@ export function RunSummary({ record, showDeck = true }) {
   const {
     outcome, sigilsEarned, sigilTarget, mode, ascension, ascensionName,
     boons, endingDeck, themesFaced, bossesDefeated,
-    roomsEntered, monstersSlain, durationMs,
+    roomsEntered, monstersSlain, durationMs, seed, seedChosen, gameVersion,
   } = record
 
   const deck = endingDeck || []
@@ -194,6 +195,7 @@ export function RunSummary({ record, showDeck = true }) {
 
       <Section title="Mode">
         <RuneList items={modeItems} />
+        <SeedLine seed={seed} version={gameVersion} chosen={seedChosen} />
       </Section>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3 py-2 short:py-1 sm:py-3 border-y border-stone-800">

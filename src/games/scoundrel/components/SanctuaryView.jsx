@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  descend, pickBoon, setRunMode, setRunAscension,
+  descend, pickBoon, setRunMode, setRunAscension, setRunSeed,
   applyForgeEdit, skipForgeEdit, forgeActive,
   isEnabled, BASE_MAX_HP,
 } from '../logic'
@@ -9,6 +9,7 @@ import { BoonOfferPanel, RunStatePanel, DeckPeekButton, DeckModal, LoadoutPanel,
 import { EditOfferPanel } from './forge'
 import { RulesInlinePanel, TutorialIntroPanel } from './rules'
 import { ModePickerPanel, ModeBadge } from './modes'
+import { SeedPanel } from './seed'
 import { LibraryPanel } from './library'
 import { AscensionPickerPanel, AscensionBadge } from './ascensions'
 import { audio } from '../audio'
@@ -73,6 +74,13 @@ export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked
             currentLevel={game.ascension || 0}
             ceiling={ascensionUnlocked}
             onSelect={(level) => { audio.sfx('cardFlip'); setGame(g => setRunAscension(g, level)) }}
+          />
+        )}
+        {game.seed && (
+          <SeedPanel
+            seed={game.seed}
+            chosen={game.seedChosen}
+            onEnter={(code) => { audio.sfx('cardFlip'); setGame(g => setRunSeed(g, code)) }}
           />
         )}
         {!showAscensionPicker && <RulesInlinePanel onOpenFull={onOpenRules} />}

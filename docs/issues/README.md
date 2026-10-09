@@ -1,6 +1,6 @@
 # Launch-readiness backlog
 
-37 issues, scoped against one milestone: **sending the game to the first batch of
+38 issues, scoped against one milestone: **sending the game to the first batch of
 users.** Issues 01–25 came from a read-only audit of the codebase, API layer, and
 markdown docs; issue 26 surfaced when the full test suite was actually run, and
 issue 28 came from playing it. **Issues 29–36 came from a second full read on
@@ -8,7 +8,9 @@ issue 28 came from playing it. **Issues 29–36 came from a second full read on
 engine, the sync seam, the API surface and the payload, run against a green
 suite rather than a broken one. **Issue 37 came out of a workflow review on
 2026-09-01**: the balance spec is the only design doc in the repo with no
-instrument that can fail it.
+instrument that can fail it. **Issue 38 is a feature request from Joey
+(2026-10-09)**: shareable run seeds, so two players can compare runs on the
+same dungeon.
 
 Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 
@@ -413,6 +415,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [14](14-anonymous-handle-copy-mismatch.md) | **BUG** UI promises "Anonymous" listing; server excludes it | bug | S | **done** |
 | [27](27-save-reset-outside-crash-path.md) | No save reset for a run stuck without crashing | product | S | **done** |
 | [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
+| [38](38-shareable-run-seeds.md) | No shareable run seeds: two players never play the same dungeon | product | L | open |
 
 ### P3 — quality, performance, accessibility
 
@@ -442,7 +445,9 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Two issues are open: 13 and 17 (17 is built, on PR #21). This section is the ordering rule —
+Three issues are open: 13, 17 (built, on PR #21) and 38. **38 needs Joey's
+answers to its "Decide first" questions before anyone builds it**, so an
+unattended run should not pick it. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 
 **35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and
@@ -532,6 +537,7 @@ Issues 15 and 33 held this slot before 37 and are closed. Do not pick them again
 12 (unhide tabs) ─────────────────────>┘
 
 11 (flag defaults) ──> 13 (measurement window)   settle flags before opening it
+11 (flag defaults) ──> 38 (seeds: a `seeds` flag, and seeds must pin the flags)
 12 (library tab) ────> 11 (needs `library: true`)
 
 20 (README) ───────> 22 (fold live setup notes in before archiving)

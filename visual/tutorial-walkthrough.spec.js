@@ -19,7 +19,12 @@ import { test, expect } from '@playwright/test'
 //      a win. Before the tail-guidance fix, following imperfectly could end in
 //      death; the cue now guides all the way to the exit.
 
-test('tutorial: cue guides every lesson to a win', async ({ page }) => {
+// Run twice: once as-is, once with the OS reduced-motion setting on (issue 17),
+// where the cue is a static ring rather than a pulse and every card animation
+// collapses to its end state. The walk must still read and still win.
+for (const reducedMotion of ['no-preference', 'reduce']) {
+test(`tutorial: cue guides every lesson to a win (motion: ${reducedMotion})`, async ({ page }) => {
+  await page.emulateMedia({ reducedMotion })
   // The walk is ~18 clicked steps with settle waits between each.
   test.setTimeout(120000)
   // Fresh player: without the completed flag, the app starts the curated walk.
@@ -87,3 +92,4 @@ test('tutorial: cue guides every lesson to a win', async ({ page }) => {
   ).toBe(true)
   await expect(page.getByText('Tutorial complete')).toBeVisible()
 })
+}

@@ -535,3 +535,66 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(251, 191, 36, 0.4); }
+
+/* Reduced motion: the OS setting asks for no movement, so every animation and
+   transition collapses to its end state. Durations go to 0.01ms rather than
+   `animation: none` so animationend still fires; the HP flash, weapon snap
+   and sigil flourish all clear their own state on it. The four infinite
+   animations stop after that one instant pass, and the three that carry
+   meaning get a static stand-in below so the signal survives. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* A color fade, not movement: keep it so damage and healing still read. */
+  .animate-hp-flash-damage,
+  .animate-hp-flash-heal {
+    animation-duration: 0.45s !important;
+  }
+
+  /* A loading spinner that stops spinning looks like a hang. */
+  .animate-spin {
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Critical HP: the breathing glow held at its brightest, plus a ring. */
+  .animate-critical-pulse {
+    animation: none !important;
+    box-shadow: 0 0 0 1px rgba(254, 202, 202, 0.9), 0 0 16px 2px rgba(239, 68, 68, 0.9) !important;
+  }
+
+  /* Boss card: the glow held at its peak. */
+  .card-face.is-boss {
+    animation: none !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 253, 245, 0.7),
+      inset 0 -16px 24px -16px rgba(99, 69, 28, 0.42),
+      0 2px 6px rgba(0, 0, 0, 0.4),
+      0 0 0 2px rgba(251, 191, 36, 0.8),
+      0 0 30px 3px rgba(251, 191, 36, 0.7) !important;
+  }
+
+  /* Tutorial cue: the ring held at full strength. */
+  .tutorial-recommended {
+    animation: none !important;
+    box-shadow:
+      0 0 0 3px rgba(251, 191, 36, 0.95),
+      0 0 28px 2px rgba(251, 191, 36, 0.55) !important;
+  }
+
+  /* Decorative: held at rest. */
+  .rune-pulse {
+    animation: none !important;
+    box-shadow:
+      0 0 0 1px rgba(251, 191, 36, 0.35),
+      0 0 22px -4px rgba(239, 68, 68, 0.55),
+      inset 0 0 14px rgba(251, 191, 36, 0.08) !important;
+  }
+}

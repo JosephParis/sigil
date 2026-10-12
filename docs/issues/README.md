@@ -60,7 +60,8 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/bare-hands-layout.spec.js` | dev | 8 pass |
 | `screens.spec.js` | dev | 6 pass (1 known skip — issue 12) |
 | `mobile-responsive-simple.spec.js` | dev | 12 pass |
-| `tutorial-walkthrough.spec.js` | dev | 1 pass |
+| `tutorial-walkthrough.spec.js` | dev | 2 pass (motion on and off) |
+| `visual/reduced-motion.spec.js` | dev | 4 pass |
 | `dev-tools-gate.prod.spec.js` | prod | 6 pass |
 | `error-boundary.prod.spec.js` | prod | 8 pass |
 | `mobile-responsive.spec.js` | dev | 31 pass |
@@ -73,6 +74,8 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 **Re-measured 2026-10-09** on issue 38 (+19 unit: 18 in `test/seed.test.js`,
 1 in `leaderboard.handler`; +7 e2e in `visual/seeds.spec.js`), clean in one
 pass with lint and build.
+**Dev half re-measured 2026-09-23** with issue 17 (+5 e2e: 4 in
+`reduced-motion.spec.js`, 1 for the tutorial walk under reduced motion).
 **Re-measured 2026-10-05** on issue 12 (+3 e2e in `copy-accuracy.spec.js`, now
 19), clean in one pass with lint and build.
 **Re-measured 2026-10-05** on issue 11 (+5 unit, `test/flags.test.js`). The
@@ -183,6 +186,8 @@ rather than only on main), **34** (the analytics funnel sees the tutorial, the
 Forge and boon choices, and every descent exit; decided in a pure, tested tracker),
 **11** (flag defaults kept as shipped — batch 1 is a qualitative pass on `0.4`),
 **12** (Boons and Trials reference tabs restored and audited; Card library parked).
+**17** (the OS reduced-motion setting stops every animation; low HP, boss cards
+and the tutorial cue keep a static glow instead of a pulse).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -428,7 +433,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 |---|---|---|---|---|
 | [15](15-unit-tests-game-logic.md) | No unit tests over ~100KB of game logic | testing | L | **done** |
 | [16](16-audio-payload.md) | ~31MB audio, ~17MB byte-identical duplicates | performance | S | **done** |
-| [17](17-prefers-reduced-motion.md) | No `prefers-reduced-motion`; 4 infinite animations | accessibility | S | open |
+| [17](17-prefers-reduced-motion.md) | No `prefers-reduced-motion`; 4 infinite animations | accessibility | S | **done** |
 | [18](18-google-fonts-blocking-import.md) | Render-blocking Google Fonts `@import` | performance | S | **done** |
 | [19](19-robots-txt.md) | No `robots.txt` while `/admin` is live | hygiene | S | **done** |
 | [32](32-music-bed-payload.md) | Two music beds are 15MB of the 16MB audio payload | performance | M | done |
@@ -450,8 +455,8 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Two issues are open: 13 and 17 (17 is built, on PR #21). 38 (run seeds) was
-built and shipped on 2026-10-09. This section is the ordering rule —
+One issue is open: 13. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
+was built and shipped on 2026-10-09. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 
 **35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and
@@ -472,7 +477,7 @@ history.
 
 Issue 29 (the Forge cadence) closed on 2026-09-02 and unblocks 34 and 37.
 
-**Then:** 17 (reduced motion). ~~37 (the balance simulator)~~ and ~~35 (service
+**Then:** ~~17 (reduced motion)~~, done 2026-09-23. ~~37 (the balance simulator)~~ and ~~35 (service
 worker)~~ were declined on 2026-09-20.
 
 Issue 34 (the analytics funnel) closed on 2026-09-10.
@@ -504,9 +509,9 @@ rather than approximate them:
 ### The standing pick for a long unattended window
 
 **None.** 37 held this slot until it was declined on 2026-09-20; do not pick
-it. Of the four open issues, **17 is the only one an unattended run may take**
-— 11 and 13 need a person and 12 is gated on 11. Once 17 closes, an unattended
-run has nothing eligible here and should say so rather than invent work.
+it. **17 closed on 2026-09-23**, so of the three open issues none may be taken
+unattended: 11 and 13 need a person and 12 is gated on 11. An unattended run
+has nothing eligible here and should say so rather than invent work.
 
 Issues 15 and 33 held this slot before 37 and are closed. Do not pick them again.
 

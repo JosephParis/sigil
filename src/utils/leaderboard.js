@@ -16,6 +16,17 @@ const LEADERBOARD_API = '/api/leaderboard'
  */
 export const ANONYMOUS_NAME = 'Anonymous'
 
+// mm:ss, the conventional shape for a time to beat. Hours are rare but a long
+// grind shouldn't render as "97:41", so they get their own segment.
+export function formatTime(ms) {
+  const total = Math.max(0, Math.floor((ms || 0) / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const pad = n => String(n).padStart(2, '0')
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
+}
+
 /**
  * What to print in an entry's name column.
  *
@@ -45,8 +56,10 @@ export function entryDisplayName(entry) {
  * @param {AbortSignal} [opts.signal] - abort when the modal closes.
  * @returns {Promise<{ok: true, data: object} | {ok: false, reason: string}>}
  */
-export async function fetchLeaderboard({ accountId, deviceId, limit, signal } = {}) {
+export async function fetchLeaderboard({ accountId, deviceId, limit, seed, signal } = {}) {
   const params = new URLSearchParams()
+  // One seed's board instead of the main one (issue 39).
+  if (seed) params.set('seed', seed)
   const signedIn = accountId && accountId !== 'guest'
   if (signedIn) params.set('me', accountId)
   else if (deviceId) params.set('device', deviceId)

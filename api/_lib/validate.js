@@ -17,6 +17,7 @@
 // ruleset. constants.js must stay environment-agnostic (no browser globals) for
 // this to keep working from a serverless function.
 import { SIGIL_TARGET, VERSION_HISTORY } from '../../src/games/scoundrel/constants.js'
+import { normalizeSeed } from '../../src/games/scoundrel/seed.js'
 
 // One request should never carry more than a device's short-outage backlog.
 // historyStore caps local history at 200, so a full resend is bounded by that;
@@ -110,6 +111,16 @@ export function validateRunRecord(record, now = Date.now()) {
   // records predate the stamp.
   if (record.gameVersion != null && !VERSIONS.has(record.gameVersion)) {
     return { ok: false, reason: 'unknown_game_version' }
+  }
+
+  // --- seed -----------------------------------------------------------------
+  // The per-seed board matches on this exact string, so it must already be the
+  // canonical code buildRunRecord writes. Absent or null is a legacy run.
+  if (record.seed != null && (typeof record.seed !== 'string' || normalizeSeed(record.seed) !== record.seed)) {
+    return { ok: false, reason: 'bad_seed' }
+  }
+  if (record.seedChosen != null && typeof record.seedChosen !== 'boolean') {
+    return { ok: false, reason: 'bad_seed_chosen' }
   }
 
   return { ok: true }

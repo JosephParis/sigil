@@ -62,6 +62,8 @@ create index if not exists runs_outcome_idx on runs (outcome);
 create index if not exists runs_account_idx on runs (account_id);
 create index if not exists runs_ended_idx   on runs (ended_at);
 create index if not exists runs_version_idx on runs (game_version);
+-- The per-seed board (issue 39) filters on record->>'seed'.
+create index if not exists runs_seed_idx   on runs ((record->>'seed'));
 
 -- ---------------------------------------------------------------------------
 -- profiles -- owned by api/save.js. One row per signed-in player: the cloud

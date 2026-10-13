@@ -4,6 +4,7 @@ import { RunSummary, EndingKitSection } from './RunSummary'
 import { buildRunRecord } from '../history'
 import { useEffectiveName, useAnonymous, MAX_HANDLE_LENGTH } from '../settings'
 import { nameSuggestions } from '../assignedName'
+import { SeedChallengePanel } from './seed'
 
 // Naming yourself, at the one moment you care who won.
 //
@@ -18,7 +19,7 @@ import { nameSuggestions } from '../assignedName'
 //
 // Shown on victory only. Deaths are not ranked, so there is nothing to be
 // credited for and nothing to ask about.
-function LeaderboardNudge({ onClaimName }) {
+function LeaderboardNudge({ onClaimName, seedBoard = false }) {
   const current = useEffectiveName()
   const anonymous = useAnonymous()
   const [open, setOpen] = useState(false)
@@ -46,9 +47,11 @@ function LeaderboardNudge({ onClaimName }) {
   if (!open) {
     return (
       <p className="text-[12px] text-slate-400 -mt-1 short:-mt-2 mb-3 short:mb-2 sm:mb-4 max-w-md">
+        {/* A run on an entered seed is kept off the main board (issue 38) and
+            is listed only on that seed's board, so say which. */}
         {anonymous
-          ? 'This victory is listed without a name.'
-          : <>This victory is listed as <span className="text-rune">{current}</span>.</>}{' '}
+          ? `This victory is listed ${seedBoard ? 'on the seed board ' : ''}without a name.`
+          : <>This victory is listed {seedBoard ? 'on the seed board ' : ''}as <span className="text-rune">{current}</span>.</>}{' '}
         <button
           onClick={reveal}
           className="text-rune underline underline-offset-2 hover:text-amber-300 transition"
@@ -108,7 +111,7 @@ function LeaderboardNudge({ onClaimName }) {
 
 // onBeginAgain wraps freshRun() in the root so this file doesn't
 // depend on save/load details.
-export function OutcomeView({ game, onBeginAgain, onClaimName }) {
+export function OutcomeView({ game, onBeginAgain, onClaimName, onReplaySeed, onOpenSeedBoard }) {
   const won = game.phase === 'victory'
   // Every victory now offers this, named or not: the run is on the board either
   // way, and the question is only whose name is against it.
@@ -151,7 +154,9 @@ export function OutcomeView({ game, onBeginAgain, onClaimName }) {
         {won ? 'ASCEND' : 'BEGIN AGAIN'}
       </button>
 
-      {won && <LeaderboardNudge onClaimName={onClaimName} />}
+      {won && <LeaderboardNudge onClaimName={onClaimName} seedBoard={game.seedChosen === true} />}
+
+      <SeedChallengePanel game={game} record={record} onReplaySeed={onReplaySeed} onOpenSeedBoard={onOpenSeedBoard} />
 
       <div className="w-full max-w-4xl grid grid-cols-[1.4fr_1fr] lg:grid-cols-2 gap-3 short:gap-2 sm:gap-5 items-start text-left">
         <div className="panel p-4 short:p-3 sm:p-6">

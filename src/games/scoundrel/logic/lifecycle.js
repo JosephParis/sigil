@@ -51,6 +51,7 @@ export function createRun(rng = Math.random, options = {}) {
     ascension = 0,
     seed = null,
     seedChosen = false,
+    challenge = null,
   } = options
   const nextTheme = tutorial ? 'tutorial' : 'the_quiet'
 
@@ -80,6 +81,9 @@ export function createRun(rng = Math.random, options = {}) {
     rng,
     seed,
     seedChosen: Boolean(seed) && seedChosen,
+    // A friend's time to beat on this seed (issue 39): { seed, durationMs, by }.
+    // Tied to the seed it came with, so entering a different seed drops it.
+    challenge: seed && challenge ? { ...challenge, seed } : null,
     // Count of choice-driven rolls this descent (see playRoll in seed.js).
     playRolls: 0,
 
@@ -193,7 +197,8 @@ export function setRunSeed(state, seed) {
   if (state.sigilsEarned !== 0) return state
   if (state.tutorial) return state
   if (!seed || state.seed === seed) return state
-  return { ...state, seed, seedChosen: true }
+  const challenge = state.challenge?.seed === seed ? state.challenge : null
+  return { ...state, seed, seedChosen: true, challenge }
 }
 
 // Change the run's ascension level. Same rules as setRunMode: pre-descent

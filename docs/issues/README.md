@@ -1,6 +1,6 @@
 # Launch-readiness backlog
 
-38 issues, scoped against one milestone: **sending the game to the first batch of
+39 issues, scoped against one milestone: **sending the game to the first batch of
 users.** Issues 01–25 came from a read-only audit of the codebase, API layer, and
 markdown docs; issue 26 surfaced when the full test suite was actually run, and
 issue 28 came from playing it. **Issues 29–36 came from a second full read on
@@ -10,13 +10,14 @@ suite rather than a broken one. **Issue 37 came out of a workflow review on
 2026-09-01**: the balance spec is the only design doc in the repo with no
 instrument that can fail it. **Issue 38 is a feature request from Joey
 (2026-10-09)**: shareable run seeds, so two players can compare runs on the
-same dungeon.
+same dungeon. **Issue 39 is its follow-up (2026-10-12)**: a time to beat on a
+shared seed, and a board for each seed.
 
 Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 
 | Suite | Runner | Status |
 |---|---|---|
-| `test/validate.test.js` | vitest | 42 pass |
+| `test/validate.test.js` | vitest | 44 pass |
 | `test/runs.handler.test.js` | vitest | 22 pass |
 | `test/rateLimit.test.js` | vitest | 13 pass |
 | `test/audio.test.js` | vitest | 13 pass |
@@ -30,7 +31,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/themes.test.js` | vitest | 31 pass |
 | `test/handleDenylist.test.js` | vitest | 41 pass |
 | `test/moderation.handler.test.js` | vitest | 24 pass |
-| `test/leaderboard.handler.test.js` | vitest | 23 pass |
+| `test/leaderboard.handler.test.js` | vitest | 25 pass |
 | `test/merge.profiles.test.js` | vitest | 14 pass |
 | `test/save.handler.test.js` | vitest | 14 pass |
 | `test/stats.handler.test.js` | vitest | 14 pass |
@@ -47,9 +48,10 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `test/flags.test.js` | vitest | 5 pass |
-| `test/seed.test.js` | vitest | 18 pass |
+| `test/seed.test.js` | vitest | 25 pass |
 | `visual/copy-accuracy.spec.js` | dev | 19 pass |
 | `visual/seeds.spec.js` | dev | 7 pass |
+| `visual/seed-challenges.spec.js` | dev | 9 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
 | `visual/robots-and-payload.spec.js` | dev | 10 pass |
@@ -70,7 +72,11 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 746 unit + 209 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Full suite: 757 unit + 223 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-10-12** on issue 39, on top of the issue-17 merge (+11 unit:
+7 in `test/seed.test.js`, 2 each in `validate` and `leaderboard.handler`; +9 e2e
+in `visual/seed-challenges.spec.js`, the rest of the e2e rise is 17's), clean
+in one pass with lint and build.
 **Re-measured 2026-10-09** on issue 38 (+19 unit: 18 in `test/seed.test.js`,
 1 in `leaderboard.handler`; +7 e2e in `visual/seeds.spec.js`), clean in one
 pass with lint and build.
@@ -426,6 +432,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [27](27-save-reset-outside-crash-path.md) | No save reset for a run stuck without crashing | product | S | **done** |
 | [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
 | [38](38-shareable-run-seeds.md) | No shareable run seeds: two players never play the same dungeon | product | L | **done** |
+| [39](39-seed-challenges.md) | A seed can be shared, but not a time to beat on it | product | M | **done** |
 
 ### P3 — quality, performance, accessibility
 
@@ -456,7 +463,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 ## Pick order
 
 One issue is open: 13. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
-was built and shipped on 2026-10-09. This section is the ordering rule —
+was built and shipped on 2026-10-09, and 39 (seed challenges) on 2026-10-12. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 
 **35 and 37 are declined (Joey, 2026-09-20).** Both were built unattended and

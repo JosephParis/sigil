@@ -105,13 +105,39 @@ describe('GET /api/leaderboard — moderation', () => {
     expect(ranked.text).toContain("playerName")
   })
 
+  it("serves one seed's board, entered seeds included, when asked", async () => {
+    const res = await get({ seed: 'k7q2-m9xd' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.seed).toBe('K7Q2M9XD')
+    // The pool condition is its own sql fragment, interpolated into the
+    // ranked subquery, so the fake client records it as a separate query.
+    const pool = built("r.record->>'seed' = ?")
+    expect(pool).toHaveLength(1)
+    // Matched on the canonical code, as a bound value, never spliced in.
+    expect(pool[0].vals).toEqual(['K7Q2M9XD'])
+    // Everyone on the seed races: the entered-seed exclusion is the main
+    // board's rule, and on a seed board it would drop every friend's run.
+    expect(built('seedChosen')).toHaveLength(0)
+    // The rest of the population rules still hold.
+    const ranked = rankedFragments()[0]
+    expect(ranked.text).toContain('dev is not true')
+    expect(ranked.text).toContain('blocked_accounts')
+  })
+
+  it('refuses a seed it cannot read rather than serving the main board', async () => {
+    // Not 'not a seed': with the spaces gone that is NOTASEED, which reads.
+    const res = await get({ seed: 'nope!' })
+    expect(res.statusCode).toBe(400)
+    expect(rankedFragments()).toHaveLength(0)
+  })
+
   it('keeps runs on an entered seed off the main board', async () => {
     await get()
     // Issue 38: replaying a known seed is a head start, so those runs do not
     // race fresh ones. Inside the ranked subquery, for the same reason as the
     // blocklist: filtering afterwards would leave holes in the ranking.
-    const ranked = rankedFragments()[0]
-    expect(ranked.text).toContain("coalesce(r.record->>'seedChosen', 'false') <> 'true'")
+    expect(built("coalesce(r.record->>'seedChosen', 'false') <> 'true'")).toHaveLength(1)
+    expect(built("r.record->>'seed' = ?")).toHaveLength(0)
   })
 })
 

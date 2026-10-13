@@ -10,6 +10,7 @@ import { EditOfferPanel } from './forge'
 import { RulesInlinePanel, TutorialIntroPanel } from './rules'
 import { ModePickerPanel, ModeBadge } from './modes'
 import { SeedPanel } from './seed'
+import { activeChallenge } from '../seed'
 import { LibraryPanel } from './library'
 import { AscensionPickerPanel, AscensionBadge } from './ascensions'
 import { audio } from '../audio'
@@ -80,6 +81,7 @@ export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked
           <SeedPanel
             seed={game.seed}
             chosen={game.seedChosen}
+            challenge={activeChallenge(game)}
             onEnter={(code) => { audio.sfx('cardFlip'); setGame(g => setRunSeed(g, code)) }}
           />
         )}

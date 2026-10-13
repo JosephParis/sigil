@@ -24,7 +24,7 @@ import { useRunAnalytics } from './analytics'
 import { isDevToolsEnabled, isCrashTestRequested } from './flags'
 import { audio } from './audio'
 import { settings } from './settings'
-import { newSeed, normalizeSeed, formatSeed } from './seed'
+import { newSeed, normalizeSeed, formatSeed, parseChallenge } from './seed'
 import { GAME_VERSION } from './constants'
 
 // -- Save / load -------------------------------------------------------
@@ -188,17 +188,21 @@ function markTutorialCompleted() {
 // Math.random run did; `sharedSeed` is one the player arrived with, from a
 // friend's link, which skips the tutorial: the tutorial is curated and cannot
 // be seeded, and a friend's dungeon is what they came for.
-function freshRun(sharedSeed = null) {
+//
+// `challenge` is a friend's time to beat on that seed (issue 39).
+function freshRun(sharedSeed = null, challenge = null) {
   return createRun(Math.random, {
     tutorial: sharedSeed ? false : !tutorialAlreadyCompleted(),
     unlockedBoons: loadLibrary(),
     ascension: 0,
     seed: sharedSeed || newSeed(),
     seedChosen: Boolean(sharedSeed),
+    challenge: sharedSeed ? challenge : null,
   })
 }
 
-// A shared link: /?seed=K7Q2-M9XD&v=0.4. Read once per page load and taken out
+// A shared link: /?seed=K7Q2-M9XD&v=0.4, plus &t=<seconds>&by=<name> when it
+// is a challenge (issue 39). Read once per page load and taken out
 // of the address bar, so a reload does not try to start the run again. Cached
 // at module scope because StrictMode runs state initializers twice, and the
 // second read would find the address bar already cleaned. Other params (the
@@ -211,9 +215,8 @@ function takeLaunchLink() {
     const params = new URLSearchParams(window.location.search)
     const raw = params.get('seed')
     if (raw === null) return launchLink
-    launchLink = { seed: normalizeSeed(raw), version: params.get('v') }
-    params.delete('seed')
-    params.delete('v')
+    launchLink = { seed: normalizeSeed(raw), version: params.get('v'), challenge: parseChallenge(params) }
+    for (const key of ['seed', 'v', 't', 'by']) params.delete(key)
     const qs = params.toString()
     window.history.replaceState(
       window.history.state, '',
@@ -249,7 +252,7 @@ function openingGame() {
   const notice = link.version && link.version !== GAME_VERSION
     ? `This seed was shared from Sigil ${link.version}. You are on ${GAME_VERSION}, so the dungeon will not match theirs.`
     : null
-  return { game: freshRun(link.seed), notice }
+  return { game: freshRun(link.seed, link.challenge), notice }
 }
 
 // -- Root --------------------------------------------------------------
@@ -283,6 +286,8 @@ export default function Scoundrel() {
   const [cardLibraryOpen, setCardLibraryOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
+  // Set when the board was opened for one seed (issue 39); null is the main board.
+  const [leaderboardSeed, setLeaderboardSeed] = useState(null)
   const [homeOpen, setHomeOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -526,7 +531,7 @@ export default function Scoundrel() {
       else if (creditsOpen) setCreditsOpen(false)
       else if (cardLibraryOpen) setCardLibraryOpen(false)
       else if (historyOpen) setHistoryOpen(false)
-      else if (leaderboardOpen) setLeaderboardOpen(false)
+      else if (leaderboardOpen) { setLeaderboardOpen(false); setLeaderboardSeed(null) }
       else if (retireOpen) setRetireOpen(false)
       else if (tutorialReplayOpen) setTutorialReplayOpen(false)
       else if (loginOpen) setLoginOpen(false)
@@ -625,7 +630,8 @@ export default function Scoundrel() {
       <LeaderboardModal
         open={leaderboardOpen}
         user={user}
-        onClose={() => setLeaderboardOpen(false)}
+        seed={leaderboardSeed}
+        onClose={() => { setLeaderboardOpen(false); setLeaderboardSeed(null) }}
       />
       <HomeView
         open={homeOpen}
@@ -651,7 +657,15 @@ export default function Scoundrel() {
         {game.phase === 'sanctuary' && <SanctuaryView game={game} setGame={setGame} onSkipTutorial={skipTutorial} ascensionUnlocked={ascensionUnlocked} celebrateSigil={sigilCelebrate} onSigilCelebrated={() => setSigilCelebrate(false)} onOpenRules={() => setRulesOpen(true)} />}
         {game.phase === 'descent' && <DescentView game={game} setGame={setGame} />}
         {(game.phase === 'gameover' || game.phase === 'victory') && (
-          <OutcomeView game={game} onBeginAgain={() => setGame(freshRun())} onClaimName={claimName} />
+          <OutcomeView
+            game={game}
+            onBeginAgain={() => setGame(freshRun())}
+            onClaimName={claimName}
+            // Same seed, and the same friend's time if there was one: a second
+            // go is the point of a challenge.
+            onReplaySeed={() => setGame(freshRun(game.seed, game.challenge))}
+            onOpenSeedBoard={() => { setLeaderboardSeed(game.seed); setLeaderboardOpen(true) }}
+          />
         )}
       </main>
     </div>

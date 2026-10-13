@@ -26,6 +26,23 @@ function record(overrides = {}) {
 
 const reason = r => (r.ok ? null : r.reason)
 
+describe('validateRunRecord — seed (issue 39)', () => {
+  it('accepts a canonical seed, and none at all', () => {
+    expect(validateRunRecord(record({ seed: 'K7Q2M9XD', seedChosen: true }), NOW).ok).toBe(true)
+    expect(validateRunRecord(record({ seed: null, seedChosen: false }), NOW).ok).toBe(true)
+    expect(validateRunRecord(record(), NOW).ok).toBe(true)
+  })
+
+  it('refuses a seed the per-seed board could never match', () => {
+    // The board matches the stored string exactly, so only the canonical form
+    // buildRunRecord writes is accepted.
+    expect(reason(validateRunRecord(record({ seed: 'k7q2-m9xd' }), NOW))).toBe('bad_seed')
+    expect(reason(validateRunRecord(record({ seed: 'x'.repeat(5000) }), NOW))).toBe('bad_seed')
+    expect(reason(validateRunRecord(record({ seed: 12345678 }), NOW))).toBe('bad_seed')
+    expect(reason(validateRunRecord(record({ seedChosen: 'yes' }), NOW))).toBe('bad_seed_chosen')
+  })
+})
+
 describe('validateRunRecord', () => {
   it('accepts a well-formed record', () => {
     expect(validateRunRecord(record(), NOW)).toEqual({ ok: true })

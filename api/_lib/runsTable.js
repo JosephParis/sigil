@@ -38,6 +38,8 @@ export function ensureRunsTable(sql) {
         sql`create index if not exists runs_account_idx on runs (account_id)`,
         sql`create index if not exists runs_ended_idx on runs (ended_at)`,
         sql`create index if not exists runs_version_idx on runs (game_version)`,
+        // The per-seed board (issue 39) filters on the seed inside the blob.
+        sql`create index if not exists runs_seed_idx on runs ((record->>'seed'))`,
       ]))
   }
   return ready

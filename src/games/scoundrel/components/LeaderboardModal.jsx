@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { fetchLeaderboard, entryDisplayName } from '../../../utils/leaderboard'
+import { fetchLeaderboard, entryDisplayName, formatTime } from '../../../utils/leaderboard'
 import { getMode } from '../constants'
 import { useHandle } from '../settings'
 import { deviceSeed } from '../assignedName'
+import { formatSeed } from '../seed'
 
 // The public fastest-victory board. Only wins are ranked, one entry per
 // player, fastest first. Data comes from /api/leaderboard, which is absent in
@@ -10,17 +11,6 @@ import { deviceSeed } from '../assignedName'
 // normal outcome here rather than an error to shout about.
 
 const BOARD_LIMIT = 25
-
-// mm:ss, the conventional shape for a time to beat. Hours are rare but a long
-// grind shouldn't render as "97:41", so they get their own segment.
-function formatTime(ms) {
-  const total = Math.max(0, Math.floor((ms || 0) / 1000))
-  const h = Math.floor(total / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const s = total % 60
-  const pad = n => String(n).padStart(2, '0')
-  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`
-}
 
 function formatDate(ms) {
   if (!ms) return ''
@@ -89,12 +79,16 @@ function Row({ entry }) {
 // The shell owns nothing but the open flag, so the body below mounts fresh on
 // every open. That means it starts in its own 'loading' state and refetches
 // each time, without the effect having to reset state on the way in.
-export function LeaderboardModal({ open, onClose, user }) {
+//
+// `seed` switches it to that seed's board (issue 39): every victory on the one
+// seed, including runs where the seed was entered rather than minted, which
+// the main board leaves out.
+export function LeaderboardModal({ open, onClose, user, seed = null }) {
   if (!open) return null
-  return <LeaderboardBody onClose={onClose} user={user} />
+  return <LeaderboardBody onClose={onClose} user={user} seed={seed} />
 }
 
-function LeaderboardBody({ onClose, user }) {
+function LeaderboardBody({ onClose, user, seed }) {
   const [state, setState] = useState({ status: 'loading' })
   const handle = useHandle()
 
@@ -108,6 +102,7 @@ function LeaderboardBody({ onClose, user }) {
       // every guest posts as 'guest', so the account id identifies no one.
       deviceId: deviceSeed(),
       limit: BOARD_LIMIT,
+      seed,
       signal: controller.signal,
     })
       .then(result => {
@@ -120,7 +115,7 @@ function LeaderboardBody({ onClose, user }) {
         // Aborted by the cleanup below; the modal is gone.
       })
     return () => controller.abort()
-  }, [user])
+  }, [user, seed])
 
   const data = state.status === 'ready' ? state.data : null
   // Their best run, shown pinned below the page when its rank fell outside it.
@@ -142,9 +137,13 @@ function LeaderboardBody({ onClose, user }) {
         >
           ×
         </button>
-        <h2 className="font-display text-rune text-2xl mb-1">Fastest descents</h2>
+        <h2 className="font-display text-rune text-2xl mb-1">
+          {seed ? <>Seed <span className="font-mono tracking-wider">{formatSeed(seed)}</span></> : 'Fastest descents'}
+        </h2>
         <p className="text-[12px] text-slate-500 mb-4">
-          Victories only, fastest first, one entry per player.
+          {seed
+            ? 'Everyone who escaped this seed, fastest first, one entry per player.'
+            : 'Victories only, fastest first, one entry per player.'}
           {!handle.trim() && ' Your runs are listed as Anonymous until you set a leaderboard name in Settings.'}
           {' '}Press <span className="font-mono text-slate-300">Esc</span> or click outside to close.
         </p>
@@ -159,7 +158,9 @@ function LeaderboardBody({ onClose, user }) {
           </div>
         ) : data.entries.length === 0 ? (
           <div className="py-12 text-center text-slate-500 text-sm">
-            Nobody is listed yet. Clear a run and the first time is yours.
+            {seed
+              ? 'Nobody has escaped this seed yet. Clear it and the first time is yours.'
+              : 'Nobody is listed yet. Clear a run and the first time is yours.'}
           </div>
         ) : (
           <>

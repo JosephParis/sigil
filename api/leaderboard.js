@@ -1,6 +1,7 @@
 import { neon } from '@neondatabase/serverless'
 import { ensureRunsTable } from './_lib/runsTable.js'
 import { ensureBlockedTable } from './_lib/moderation.js'
+import { normalizeSeed } from '../src/games/scoundrel/seed.js'
 
 /**
  * GET /api/leaderboard — the public fastest-victory board.
@@ -41,6 +42,9 @@ import { ensureBlockedTable } from './_lib/moderation.js'
  *                   adds `self` (their best run and its rank) even when that
  *                   rank falls outside the returned page. Ignored for guests,
  *                   whose account id identifies no one in particular.
+ *   seed=<code>     one seed's board instead of the main one (issue 39): every
+ *                   victory on that seed, including runs on an entered seed,
+ *                   which the main board leaves out. 400 if unreadable.
  *   device=<id>     what a guest sends instead of `me`: the opaque per-device
  *                   id their runs carry. Same effect, and the only way a guest
  *                   can be shown which row is theirs.
@@ -108,7 +112,7 @@ function parseLimit(raw) {
 //
 // Kept as a single fragment so the board query and the caller's-own-rank query
 // rank against the same population.
-function rankedBest(versionCond) {
+function rankedBest(versionCond, poolCond) {
   return sql`(
     select account_id, ascension, sigils_earned, duration_ms, ended_at, mode,
            game_version, player_name, device_id,
@@ -129,11 +133,7 @@ function rankedBest(versionCond) {
       from runs r
       where r.outcome = 'victory'
         and r.dev is not true
-        -- A run on a seed the player entered (issue 38) replays a dungeon they
-        -- may already know, which is a head start over a fresh run. Those race
-        -- each other on the seed, not on this board. A legacy row has no
-        -- seedChosen and reads as a fresh run.
-        and coalesce(r.record->>'seedChosen', 'false') <> 'true'
+        ${poolCond}
         -- Moderation blocklist. Applied inside the ranked subquery so a blocked
         -- account is gone before row_number() runs: removing it afterwards
         -- would leave a hole in the ranking where their row used to be.
@@ -198,6 +198,19 @@ export default async function handler(req, res) {
   const limit = parseLimit(req.query?.limit)
   const version = typeof req.query?.version === 'string' ? req.query.version.trim() : ''
   const versionCond = version ? sql`and r.game_version = ${version}` : sql``
+  // ?seed= asks for one seed's board (issue 39): every victory on it, whoever
+  // minted it and whoever entered it, since that is the race a shared seed
+  // sets up. Without it, the main board -- where a run on an entered seed
+  // (issue 38) replays a dungeon its player may already know, a head start
+  // over a fresh run, and is left out. A legacy row has no seedChosen and
+  // reads as a fresh run. An unreadable seed is a 400, not the main board,
+  // so a mangled link cannot pass the global ranking off as the seed's.
+  const seedRaw = typeof req.query?.seed === 'string' ? req.query.seed : ''
+  const seed = seedRaw ? normalizeSeed(seedRaw) : null
+  if (seedRaw && !seed) return res.status(400).json({ error: 'bad_seed' })
+  const poolCond = seed
+    ? sql`and r.record->>'seed' = ${seed}`
+    : sql`and coalesce(r.record->>'seedChosen', 'false') <> 'true'`
   // A guest id identifies no one in particular, so it can't mark "your" rows.
   const meRaw = typeof req.query?.me === 'string' ? req.query.me.trim() : ''
   const me = meRaw && meRaw !== GUEST_ID ? meRaw : ''
@@ -211,7 +224,7 @@ export default async function handler(req, res) {
     // board working on a deployment where no run has been mirrored yet, rather
     // than 500ing on a missing table.
     await Promise.all([ensureRunsTable(sql), ensureBlockedTable(sql)])
-    const ranked = rankedBest(versionCond)
+    const ranked = rankedBest(versionCond, poolCond)
     const [rows, selfRows] = await Promise.all([
       sql`select * from ${ranked} b order by rank asc limit ${limit}`,
       // The caller's own best, fetched separately so their rank still shows
@@ -233,6 +246,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       generatedAt: Date.now(),
       version: version || null,
+      seed,
       limit,
       entries,
       // Present but outside the page? The client renders it as a pinned row.

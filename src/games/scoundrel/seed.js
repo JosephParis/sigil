@@ -104,8 +104,36 @@ export function playRoll(state) {
 
 // The link a player shares. The version rides along so the receiving game can
 // say when a balance change means the seed no longer plays the same dungeon.
-export function seedLink(seed, version, origin = globalThis.location?.origin || '') {
+//
+// A challenge (issue 39) adds the time to beat and who set it: `t` in whole
+// seconds, `by` the sharer's leaderboard name. Both are the sharer's own
+// claim, shown only to whoever opens the link; the seed board is where times
+// are checked against what the server actually recorded.
+export function seedLink(seed, version, origin = globalThis.location?.origin || '', challenge = null) {
   const params = new URLSearchParams({ seed: formatSeed(seed) })
   if (version) params.set('v', version)
+  if (challenge?.durationMs > 0) params.set('t', String(Math.round(challenge.durationMs / 1000)))
+  if (challenge?.by) params.set('by', challenge.by)
   return `${origin}/?${params.toString()}`
+}
+
+// The challenge a run carries, if it is for the seed being played.
+export function activeChallenge(game) {
+  const c = game?.challenge
+  return c && c.seed === game.seed ? c : null
+}
+
+export const MAX_CHALLENGER_NAME = 32
+// Ten hours. Past that a time is not a challenge anyone is chasing, and a
+// bigger number is a typo or a joke.
+const MAX_CHALLENGE_SECONDS = 10 * 60 * 60
+
+// Read a challenge off a link's params, or null when it does not carry a
+// usable one. A name with no time is not a challenge; a time with no name is
+// (the sharer may have played unlisted).
+export function parseChallenge(params) {
+  const t = Number.parseInt(params.get('t') ?? '', 10)
+  if (!Number.isFinite(t) || t <= 0 || t > MAX_CHALLENGE_SECONDS) return null
+  const by = String(params.get('by') ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_CHALLENGER_NAME).trim()
+  return { durationMs: t * 1000, by: by || null }
 }

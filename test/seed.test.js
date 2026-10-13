@@ -13,6 +13,7 @@ import { isMonster } from '../src/games/scoundrel/constants'
 import { buildRunRecord } from '../src/games/scoundrel/history'
 import {
   newSeed, normalizeSeed, formatSeed, streamFor, rngFor, playRoll, seedLink, SEED_LENGTH,
+  parseChallenge, activeChallenge, MAX_CHALLENGER_NAME,
 } from '../src/games/scoundrel/seed'
 import { seededRng } from './support/state'
 
@@ -208,5 +209,52 @@ describe('the run record', () => {
     const record = buildRunRecord(s, null)
     expect(record.seed).toBeNull()
     expect(record.seedChosen).toBe(false)
+  })
+})
+
+describe('challenges (issue 39)', () => {
+  const params = q => new URLSearchParams(q)
+
+  it('round-trips a time to beat and who set it through the link', () => {
+    const url = new URL(seedLink(SEED, '0.4', 'https://sigildeck.com', { durationMs: 872400, by: 'Cassandra' }))
+    expect(url.searchParams.get('t')).toBe('872')
+    expect(parseChallenge(url.searchParams)).toEqual({ durationMs: 872000, by: 'Cassandra' })
+  })
+
+  it('leaves the challenge off a plain seed link', () => {
+    const url = new URL(seedLink(SEED, '0.4', 'https://sigildeck.com'))
+    expect(url.searchParams.has('t')).toBe(false)
+    expect(parseChallenge(url.searchParams)).toBeNull()
+  })
+
+  it('takes a time without a name, but not a name without a time', () => {
+    expect(parseChallenge(params('t=600'))).toEqual({ durationMs: 600000, by: null })
+    expect(parseChallenge(params('by=Cassandra'))).toBeNull()
+  })
+
+  it('refuses a time nobody could be chasing', () => {
+    expect(parseChallenge(params('t=0'))).toBeNull()
+    expect(parseChallenge(params('t=-5'))).toBeNull()
+    expect(parseChallenge(params('t=abc'))).toBeNull()
+    expect(parseChallenge(params(`t=${11 * 3600}`))).toBeNull()
+  })
+
+  it('clamps and tidies the name it shows', () => {
+    const c = parseChallenge(params(`t=60&by=${encodeURIComponent('  a   b  ' + 'x'.repeat(100))}`))
+    expect(c.by.startsWith('a b ')).toBe(true)
+    expect(c.by.length).toBeLessThanOrEqual(MAX_CHALLENGER_NAME)
+  })
+
+  it('ties the challenge to the seed it came with', () => {
+    const s = createRun(seededRng(1), { seed: SEED, seedChosen: true, challenge: { durationMs: 600000, by: 'C' } })
+    expect(activeChallenge(s)).toEqual({ durationMs: 600000, by: 'C', seed: SEED })
+    // Typing a different seed in drops it: the time was set on another dungeon.
+    const other = setRunSeed(s, 'ZZZZ0000')
+    expect(other.challenge).toBeNull()
+    expect(activeChallenge(other)).toBeNull()
+  })
+
+  it('carries no challenge without a seed to pin it to', () => {
+    expect(createRun(seededRng(1), { challenge: { durationMs: 1, by: 'C' } }).challenge).toBeNull()
   })
 })

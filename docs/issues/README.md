@@ -1,6 +1,6 @@
 # Launch-readiness backlog
 
-39 issues, scoped against one milestone: **sending the game to the first batch of
+42 issues, scoped against one milestone: **sending the game to the first batch of
 users.** Issues 01–25 came from a read-only audit of the codebase, API layer, and
 markdown docs; issue 26 surfaced when the full test suite was actually run, and
 issue 28 came from playing it. **Issues 29–36 came from a second full read on
@@ -11,7 +11,11 @@ suite rather than a broken one. **Issue 37 came out of a workflow review on
 instrument that can fail it. **Issue 38 is a feature request from Joey
 (2026-10-09)**: shareable run seeds, so two players can compare runs on the
 same dungeon. **Issue 39 is its follow-up (2026-10-12)**: a time to beat on a
-shared seed, and a board for each seed.
+shared seed, and a board for each seed. **Issue 40 (2026-10-14)** writes
+down what a seed promises: the same Trials whatever the player does, and the
+same run for players who do the same things. **Issue 41 (2026-10-22)** is
+the part of 40's seed plan Joey approved: play a seed from run history, and
+the seed on screen during a descent. **Issue 42** is the Daily Descent.
 
 Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 
@@ -52,6 +56,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/copy-accuracy.spec.js` | dev | 19 pass |
 | `visual/seeds.spec.js` | dev | 7 pass |
 | `visual/seed-challenges.spec.js` | dev | 9 pass |
+| `visual/play-seed-from-history.spec.js` | dev | 6 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
 | `visual/robots-and-payload.spec.js` | dev | 10 pass |
@@ -72,7 +77,11 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 757 unit + 223 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Full suite: 757 unit + 229 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-11-09** on issue 41 (+6 e2e in
+`visual/play-seed-from-history.spec.js`), lint and build clean. The loaded run
+saw one `device-lab` test time out on `page.goto`; it does the same with the
+change stashed, so it stays filed as the known flake.
 **Re-measured 2026-10-12** on issue 39, on top of the issue-17 merge (+11 unit:
 7 in `test/seed.test.js`, 2 each in `validate` and `leaderboard.handler`; +9 e2e
 in `visual/seed-challenges.spec.js`, the rest of the e2e rise is 17's), clean
@@ -194,6 +203,8 @@ Forge and boon choices, and every descent exit; decided in a pure, tested tracke
 **12** (Boons and Trials reference tabs restored and audited; Card library parked).
 **17** (the OS reduced-motion setting stops every animation; low HP, boss cards
 and the tutorial cue keep a static glow instead of a pulse).
+**41** (Play this seed from run history, under the same rule as a shared link;
+the seed shows in the desktop descent sidebar).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -433,6 +444,9 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
 | [38](38-shareable-run-seeds.md) | No shareable run seeds: two players never play the same dungeon | product | L | **done** |
 | [39](39-seed-challenges.md) | A seed can be shared, but not a time to beat on it | product | M | **done** |
+| [40](40-seed-guarantees.md) | What a seed promises is not written down or fully tested | product | S | open |
+| [41](41-play-seed-from-history.md) | A seed from an old run can only be replayed by typing it back in | product | S | **done** |
+| [42](42-daily-descent.md) | No Daily Descent: nothing gives everyone the same dungeon on the same day | product | M | open |
 
 ### P3 — quality, performance, accessibility
 
@@ -462,7 +476,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-One issue is open: 13. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
+Three issues are open: 13, 40 and 42. 41 (play a seed from history) closed on 2026-11-09. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
 was built and shipped on 2026-10-09, and 39 (seed challenges) on 2026-10-12. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 

@@ -62,6 +62,45 @@ export function SeedLine({ seed, version, chosen = false }) {
   )
 }
 
+// The seed in the descent's sidebar (issue 41), so a streamed or screenshot
+// run has it on screen. The sidebar only exists from md: up, so phones keep
+// their layout. No copy link here: the pause menu has one.
+export function DescentSeed({ seed, chosen = false }) {
+  if (!seed) return null
+  return (
+    <div className="panel p-3">
+      <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Seed</div>
+      <div className="font-mono text-parchment text-sm tracking-wider select-all" data-testid="descent-seed">
+        {formatSeed(seed)}
+        {chosen && <span className="font-sans text-[11px] text-slate-500 tracking-normal"> (entered)</span>}
+      </div>
+    </div>
+  )
+}
+
+// "Play this seed" under a run in history (issue 41). onPlay returns the
+// reason it refused, or null once the run has started (and history closed).
+export function PlaySeedButton({ record, onPlay }) {
+  const [refusal, setRefusal] = useState(null)
+  if (!record?.seed || !onPlay) return null
+  return (
+    <div className="mt-4 flex flex-col items-start gap-2">
+      <button
+        type="button"
+        onClick={() => setRefusal(onPlay(record))}
+        className="px-4 py-2 rounded-md bg-stone-800 hover:bg-stone-700 border border-stone-600 text-parchment text-sm transition"
+      >
+        Play this seed
+      </button>
+      {refusal && (
+        <p role="alert" data-testid="play-seed-refusal" className="text-[12px] text-amber-300">
+          {refusal}
+        </p>
+      )}
+    </div>
+  )
+}
+
 // Opening-visit panel: the seed this run will play, and a field to play a
 // friend's instead. Gone after the first descent, like the mode picker, since
 // the seed locks in when the dungeon is first rolled.

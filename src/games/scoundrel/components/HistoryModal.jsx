@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { historyStore } from '../../../utils/historyStore'
 import { computeLifetimeStats } from '../history'
 import { RunSummary, EndingKitSection } from './RunSummary'
+import { PlaySeedButton } from './seed'
 import { IS_STANDALONE } from '../../../buildTarget.js'
 
 const OUTCOME_LABEL = { victory: 'Victory', death: 'Died', retired: 'Retired' }
@@ -45,7 +46,7 @@ function LifetimePanel({ stats }) {
   )
 }
 
-function RunRow({ record, expanded, onToggle }) {
+function RunRow({ record, expanded, onToggle, onPlaySeed }) {
   return (
     <li className="border border-stone-800 rounded-md overflow-hidden">
       <button
@@ -78,13 +79,14 @@ function RunRow({ record, expanded, onToggle }) {
             <RunSummary record={record} showDeck={false} />
             <EndingKitSection deck={record.endingDeck || []} />
           </div>
+          <PlaySeedButton record={record} onPlay={onPlaySeed} />
         </div>
       )}
     </li>
   )
 }
 
-export function HistoryModal({ open, onClose, user }) {
+export function HistoryModal({ open, onClose, user, onPlaySeed }) {
   const [records, setRecords] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
 
@@ -148,6 +150,7 @@ export function HistoryModal({ open, onClose, user }) {
                   record={r}
                   expanded={expandedId === r.id}
                   onToggle={() => setExpandedId(id => (id === r.id ? null : r.id))}
+                  onPlaySeed={onPlaySeed}
                 />
               ))}
             </ul>

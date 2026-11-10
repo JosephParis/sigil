@@ -16,6 +16,7 @@ import {
 } from '../logic'
 import { PhaseRail, LogPanel } from './atoms'
 import { ModeBadge } from './modes'
+import { DescentSeed } from './seed'
 import { AscensionBadge } from './ascensions'
 import { CardSlot, HpBar, AfflictionBadges, WeaponPanel, ConditionsPanel, ForesightPanel } from './cards'
 import { MapPeekModal } from './boons'
@@ -294,6 +295,7 @@ export function DescentView({ game, setGame }) {
             <ConditionsPanel game={game} theme={theme} />
             <AscensionBadge level={game.ascension} />
             <ModeBadge modeId={game.mode} />
+            <DescentSeed seed={game.seed} chosen={game.seedChosen === true} />
             <LogPanel lines={game.log} collapsible />
           </PhaseRail>
         </div>

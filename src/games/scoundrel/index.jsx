@@ -233,6 +233,20 @@ function takeLaunchLink() {
 // has nothing to lose -- none, finished, or still on its opening visit.
 // Otherwise the run in progress wins and the player is told how to play the
 // seed later, rather than a link silently throwing their run away.
+// The same test guards "Play this seed" in run history (issue 41).
+function runHasNothingToLose(game) {
+  return !game
+    || game.phase === 'gameover' || game.phase === 'victory'
+    || (game.phase === 'sanctuary' && game.sigilsEarned === 0)
+}
+
+// Said when a seed from another balance version is about to be played.
+function versionNotice(version) {
+  return version && version !== GAME_VERSION
+    ? `This seed was played on Sigil ${version}. You are on ${GAME_VERSION}, so the dungeon will not match.`
+    : null
+}
+
 function openingGame() {
   const saved = loadSavedGame()
   const link = takeLaunchLink()
@@ -240,19 +254,13 @@ function openingGame() {
   if (!link.seed) {
     return { game: saved || freshRun(), notice: 'That link’s seed could not be read, so this is your own dungeon.' }
   }
-  const idle = !saved
-    || saved.phase === 'gameover' || saved.phase === 'victory'
-    || (saved.phase === 'sanctuary' && saved.sigilsEarned === 0)
-  if (!idle) {
+  if (!runHasNothingToLose(saved)) {
     return {
       game: saved,
       notice: `You have a run in progress, so seed ${formatSeed(link.seed)} was not started. Finish or retire this run, then enter the seed on the opening screen.`,
     }
   }
-  const notice = link.version && link.version !== GAME_VERSION
-    ? `This seed was shared from Sigil ${link.version}. You are on ${GAME_VERSION}, so the dungeon will not match theirs.`
-    : null
-  return { game: freshRun(link.seed, link.challenge), notice }
+  return { game: freshRun(link.seed, link.challenge), notice: versionNotice(link.version) }
 }
 
 // -- Root --------------------------------------------------------------
@@ -569,6 +577,21 @@ export default function Scoundrel() {
     setGame(createRun(Math.random, { tutorial: false, unlockedBoons: loadLibrary(), seed: newSeed() }))
   }
 
+  // "Play this seed" from a run in history (issue 41). Same rule as a shared
+  // link: it only replaces a run with nothing to lose. Returns the reason it
+  // refused, for the history row to show, or null once the run has started.
+  const playSeedFromHistory = (record) => {
+    if (!runHasNothingToLose(game)) {
+      return 'You have a run in progress. Finish or retire it, then play this seed.'
+    }
+    setGame(freshRun(record.seed))
+    setSeedNotice(versionNotice(record.gameVersion))
+    setNoticePhase('sanctuary')
+    setHistoryOpen(false)
+    setHomeOpen(false)
+    return null
+  }
+
   const confirmRetire = () => {
     setGame(g => retireRun(g))
     setRetireOpen(false)
@@ -626,6 +649,7 @@ export default function Scoundrel() {
         open={historyOpen}
         user={user}
         onClose={() => setHistoryOpen(false)}
+        onPlaySeed={playSeedFromHistory}
       />
       <LeaderboardModal
         open={leaderboardOpen}

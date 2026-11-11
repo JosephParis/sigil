@@ -62,7 +62,9 @@ describe('assignedNameFor — shape', () => {
       const name = assignedNameFor(`slur-probe-${i}-${(i * 7919) % 104729}`)
       expect(isHandleAllowed(name)).toBe(true)
     }
-  })
+  // 60,000 names take about 3s alone; alongside the rest of the suite that
+  // crosses vitest's 5s default. The width is the point, so the budget grows.
+  }, 30000)
 
   it('re-rolls to somewhere unrelated rather than to the next number', () => {
     // Blocked names come in runs -- "Mason1699" and "Mason1699" differ from

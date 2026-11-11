@@ -71,9 +71,12 @@ End-to-end, against the deployed URL:
       hard case: set the *same* name on both devices and confirm both still
       place. That is the defect this replaced, and it is invisible until two
       real devices post.
-- [ ] Confirm the `handles` table is created on first write and that a second
+- [x] Confirm the `handles` table is created on first write and that a second
       owner claiming a taken name is stored disambiguated (`Rookwarden 2`), with
-      the response reporting the stored name rather than the requested one
+      the response reporting the stored name rather than the requested one -- the registry
+      exists and held: a second owner of `LostAlmoner3016` was stored as
+      `LostAlmoner3016 2` (2026-11-11). `/api/runs` answers only `{ok, count}`;
+      the stored name shows on the board
 - [x] Confirm an assigned name counts up rather than being suffixed: a second
       device asking for `Ashen Vagrant 47` should land on `Ashen Vagrant 48` --
       **failed** 2026-11-11 (`LostAlmoner3016 2`); fixed by issue 43, and a
@@ -180,7 +183,7 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
         not shown yet: every daily run so far is a death, and the main board
         lists only victories anyway. Needs a daily **victory**
   - [x] `GET /api/leaderboard?daily=2026-02-30` is a 400 `bad_daily`
-  - [ ] A hand-rolled POST to `/api/runs` with `daily` set and a different
+  - [x] A hand-rolled POST to `/api/runs` with `daily` set and a different
         day's seed is rejected `daily_seed_mismatch` -- the response reads
         `400 no_valid_records`, which is what a batch with nothing valid in
         it reports; the same record run through `validateRunRecord` locally

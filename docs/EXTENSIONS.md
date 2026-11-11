@@ -151,6 +151,20 @@ Already proposed (§7 DESIGN.md). Worth expanding:
 
 These are pure replayability surfaces; they cost mostly UI work.
 
+- **Stable Boon offers across different picks** *(considered and parked, Joey,
+  2026-11-10)*. Today two players on one seed see the same offers only while
+  their picks agree; after one different pick, the pool each offer roll draws
+  from differs, so the whole offer shifts (measured over 300 seeds: 22% of
+  second sanctuaries identical, about 28% overlap from the fourth on). The
+  fix would be Slay the Spire's relic approach, per sanctuary: rank every Boon
+  by a seeded weighted key (same odds as today) and offer the top three not
+  held, so players differ mostly by what they already own. Parked because
+  only the Trials are promised (`DESIGN.md` §7), nothing yet says players
+  compare offers, and the daily board ranks sigils and time, not builds.
+  Revisit if players ask why a friend on the same seed was offered something
+  they were not. It would change every seed's offers, so it takes a
+  `GAME_VERSION` bump after launch.
+
 ## 9. Alternate Modes
 
 Self-contained game modes, each picked from the run-start screen. They use the same systems but tilt one rule hard.

@@ -309,3 +309,42 @@ test.describe('rules reference tabs', () => {
     await expect(modal.getByRole('button', { name: 'Card library' })).toHaveCount(0)
   })
 })
+
+// -- Issue 44: the board's description named the wrong listing ---------------
+//
+// It said runs were listed as Anonymous until a name was set in Settings. Since
+// every player was given an assigned name, a run with no name chosen is listed
+// under that name, which production showed on 2026-11-11. The description has
+// to name what the player's runs actually go up under.
+
+test.describe('leaderboard description (issue 44)', () => {
+  async function openBoard(page) {
+    await page.route('**/api/leaderboard**', route => route.fulfill({
+      json: { generatedAt: Date.now(), version: null, seed: null, daily: null, limit: 25, entries: [], self: null, selfInPage: false },
+    }))
+    await page.goto('/')
+    await page.getByRole('button', { name: 'More options' }).click()
+    await page.getByRole('menuitem', { name: /Leaderboard/ }).click()
+    await expect(page.getByRole('heading', { name: 'Fastest descents' })).toBeVisible()
+  }
+
+  test('with no name chosen, it names the assigned one', async ({ page }) => {
+    await seed(page, { handle: '' })
+    await openBoard(page)
+    await expect(page.getByText(/Your runs are listed as/)).toContainText(ASSIGNED)
+    await expect(page.getByText(/listed as Anonymous/i)).toHaveCount(0)
+  })
+
+  test('with a chosen name, it names that', async ({ page }) => {
+    await seed(page, { handle: 'Rookwarden' })
+    await openBoard(page)
+    await expect(page.getByText(/Your runs are listed as/)).toContainText('Rookwarden')
+  })
+
+  test('opted out, it says Anonymous', async ({ page }) => {
+    await seed(page, { handle: 'Rookwarden', anonymous: true })
+    await openBoard(page)
+    await expect(page.getByText(/listed as Anonymous, as chosen in Settings/)).toBeVisible()
+  })
+})
+

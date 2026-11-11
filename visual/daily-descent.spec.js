@@ -137,6 +137,35 @@ test.describe('the Daily Descent', () => {
     expect(state.seed).toBe(TODAY_SEED)
   })
 
+  test('an open board refetches past the cache once your run has landed (issue 45)', async ({ page }) => {
+    const asked = []
+    await page.route('**/api/leaderboard**', route => {
+      asked.push(new URL(route.request().url()))
+      return route.fulfill({
+        json: { generatedAt: Date.now(), version: null, seed: TODAY_SEED, daily: TODAY, limit: 25, entries: [], self: null, selfInPage: false },
+      })
+    })
+    await start(page, { game: finishedDaily() })
+    await page.getByTestId('daily-outcome').getByRole('button', { name: 'Daily board' }).click()
+    // StrictMode in dev mounts the board twice, so count nothing: every
+    // request so far goes without the value.
+    await expect.poll(() => asked.length).toBeGreaterThan(0)
+    expect(asked.every(u => !u.searchParams.has('fresh'))).toBe(true)
+    const before = asked.length
+
+    // What historyStore does when the server confirms the run. There is no
+    // /api/runs in dev, so the confirmation itself is unit-tested
+    // (test/boardFreshness.test.js); this is the board's half.
+    await page.evaluate(() => {
+      localStorage.setItem('scoundrel:boardFresh', '1794000061000')
+      window.dispatchEvent(new Event('scoundrel:board-fresh'))
+    })
+    await expect.poll(() => asked.length).toBeGreaterThan(before)
+    const after = asked[asked.length - 1]
+    expect(after.searchParams.get('fresh')).toBe('1794000061000')
+    expect(after.searchParams.get('daily')).toBe(TODAY)
+  })
+
   test('run history labels a daily with its day', async ({ page }) => {
     const startedAt = Date.now() - 600_000
     await start(page, {

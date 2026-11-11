@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { fetchLeaderboard, entryDisplayName, formatTime } from '../../../utils/leaderboard'
 import { getMode } from '../constants'
-import { useHandle } from '../settings'
+import { useEffectiveName } from '../settings'
 import { deviceSeed } from '../assignedName'
 import { formatSeed, formatDaily } from '../seed'
+import { boardFreshness, BOARD_FRESH_EVENT } from '../../../utils/historyStore'
 
 // The public fastest-victory board. Only wins are ranked, one entry per
 // player, fastest first. Data comes from /api/leaderboard, which is absent in
@@ -56,7 +57,8 @@ function Row({ entry, daily = false }) {
         )}
       </span>
       <span className="min-w-0 flex-1">
-        {/* playerName is null for a player who never set a handle; those runs
+        {/* playerName is null for a player who opted out of a name (and on some
+            older runs); those runs
             are listed too, under the anonymous stand-in. */}
         <span className={`block text-sm truncate ${entry.you ? 'text-rune' : 'text-parchment'}`}>
           {entryDisplayName(entry)}
@@ -101,7 +103,18 @@ export function LeaderboardModal({ open, onClose, user, seed = null, daily = nul
 
 function LeaderboardBody({ onClose, user, seed, daily }) {
   const [state, setState] = useState({ status: 'loading' })
-  const handle = useHandle()
+  // What a run finished now is credited to: the chosen name, else the assigned
+  // one, else nothing when the player opted out (issue 44).
+  const listedAs = useEffectiveName()
+  // Moves when one of this player's runs reaches the server, including while
+  // the board is open: a board opened the moment a run ends refetches once the
+  // run has landed (issue 45).
+  const [fresh, setFresh] = useState(boardFreshness)
+  useEffect(() => {
+    const onFresh = () => setFresh(boardFreshness())
+    window.addEventListener(BOARD_FRESH_EVENT, onFresh)
+    return () => window.removeEventListener(BOARD_FRESH_EVENT, onFresh)
+  }, [])
 
   // Refetch on mount and whenever the account changes: it decides which rows
   // come back marked as yours.
@@ -115,6 +128,7 @@ function LeaderboardBody({ onClose, user, seed, daily }) {
       limit: BOARD_LIMIT,
       seed,
       daily,
+      fresh,
       signal: controller.signal,
     })
       .then(result => {
@@ -127,7 +141,7 @@ function LeaderboardBody({ onClose, user, seed, daily }) {
         // Aborted by the cleanup below; the modal is gone.
       })
     return () => controller.abort()
-  }, [user, seed, daily])
+  }, [user, seed, daily, fresh])
 
   const data = state.status === 'ready' ? state.data : null
   // Their best run, shown pinned below the page when its rank fell outside it.
@@ -160,7 +174,9 @@ function LeaderboardBody({ onClose, user, seed, daily }) {
             : seed
               ? 'Everyone who escaped this seed, fastest first, one entry per player.'
               : 'Victories only, fastest first, one entry per player.'}
-          {!handle.trim() && ' Your runs are listed as Anonymous until you set a leaderboard name in Settings.'}
+          {listedAs
+            ? <> Your runs are listed as <span className="text-slate-300">{listedAs}</span>; change it in Settings.</>
+            : ' Your runs are listed as Anonymous, as chosen in Settings.'}
           {' '}Press <span className="font-mono text-slate-300">Esc</span> or click outside to close.
         </p>
 

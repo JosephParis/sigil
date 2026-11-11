@@ -59,7 +59,7 @@ export function entryDisplayName(entry) {
  * @param {AbortSignal} [opts.signal] - abort when the modal closes.
  * @returns {Promise<{ok: true, data: object} | {ok: false, reason: string}>}
  */
-export async function fetchLeaderboard({ accountId, deviceId, limit, seed, daily, signal } = {}) {
+export async function fetchLeaderboard({ accountId, deviceId, limit, seed, daily, fresh, signal } = {}) {
   const params = new URLSearchParams()
   // One day's daily board (issue 42), or one seed's board (issue 39), instead
   // of the main one.
@@ -69,6 +69,10 @@ export async function fetchLeaderboard({ accountId, deviceId, limit, seed, daily
   if (signedIn) params.set('me', accountId)
   else if (deviceId) params.set('device', deviceId)
   if (limit) params.set('limit', String(limit))
+  // Ignored by the server. It changes only when one of this player's runs has
+  // been confirmed, so their first look afterwards misses the edge cache and
+  // everyone else's requests still hit it (issue 45).
+  if (fresh) params.set('fresh', String(fresh))
   const query = params.toString()
 
   try {

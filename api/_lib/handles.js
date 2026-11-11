@@ -72,9 +72,15 @@ export function ensureHandlesTable(sql) {
  * The names to try, in order, for a player who wants `name`.
  *
  * A name already ending in a number counts up from it — an assigned name like
- * "Ashen Vagrant 47" becomes "Ashen Vagrant 48", which keeps the register and
- * the length rather than reading as a suffixed duplicate. Anything else gets a
- * counter appended, with the base trimmed when there is no room for it.
+ * "LostAlmoner3016" becomes "LostAlmoner3017", and a typed "Ashen Vagrant 47"
+ * becomes "Ashen Vagrant 48" — which keeps the register and the length rather
+ * than reading as a suffixed duplicate. The number keeps its width, so a padded
+ * "Almoner0099" goes to "Almoner0100". Anything else gets a counter appended,
+ * with the base trimmed when there is no room for it.
+ *
+ * Assigned names carry no space before the number (assignedName.js), so the
+ * space is optional here. Requiring it is what stored a second
+ * "LostAlmoner3016" as "LostAlmoner3016 2" in production (issue 43).
  *
  * Exported for tests: the ordering is the whole user-visible behaviour here.
  *
@@ -83,12 +89,14 @@ export function ensureHandlesTable(sql) {
  */
 export function candidatesFor(name) {
   const out = [name]
-  const numbered = /^(.*?) (\d+)$/.exec(name)
+  // Lazy base, greedy digits: the whole trailing run of digits is the number,
+  // and any space before it stays in the base.
+  const numbered = /^(.*?)(\d+)$/.exec(name)
   if (numbered) {
     const [, base, digits] = numbered
     const start = Number.parseInt(digits, 10)
     for (let i = 1; out.length <= MAX_ATTEMPTS; i++) {
-      const next = `${base} ${start + i}`
+      const next = `${base}${String(start + i).padStart(digits.length, '0')}`
       if (next.length > MAX_HANDLE_LENGTH) break
       out.push(next)
     }

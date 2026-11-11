@@ -33,6 +33,32 @@ const GUEST_ID = 'guest'
 const PENDING_KEY = 'scoundrel:history:pending'
 const RUNS_API = '/api/runs'
 const CLAIM_API = '/api/claim'
+// When the server last confirmed one of this device's runs or names (issue
+// 45). The boards are cached at the edge for a minute, so a board opened right
+// after a run could show the player's previous best; the board fetch carries
+// this value, which gives it a URL the cache has not seen once there is
+// something new of the player's to show. Local only: cloud sync copies an
+// explicit list of keys, and this is not one of them.
+const BOARD_FRESH_KEY = 'scoundrel:boardFresh'
+export const BOARD_FRESH_EVENT = 'scoundrel:board-fresh'
+
+export function boardFreshness() {
+  try {
+    return localStorage.getItem(BOARD_FRESH_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+
+function markBoardFresh() {
+  try {
+    localStorage.setItem(BOARD_FRESH_KEY, String(Date.now()))
+  } catch {
+    // Storage disabled: the board is just as cached as it was before.
+  }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(BOARD_FRESH_EVENT))
+}
+
 // Keep storage bounded so a heavy player never trips the localStorage quota.
 // Oldest runs fall off the end first.
 const MAX_RUNS = 200
@@ -170,6 +196,7 @@ class LocalHistoryStore {
       if (!res.ok) return
       // Re-read before writing: an append during the request must not be lost.
       writePending(readPending().filter(r => !sentKeys.has(serverKeyOf(r))))
+      markBoardFresh()
     } catch {
       // Leave the queue intact; the next reconcile retries it.
     }
@@ -222,6 +249,7 @@ class LocalHistoryStore {
         // this is, but not which device may claim names for it.
         body: JSON.stringify({ runKey: serverKey, playerName, deviceId: record.deviceId }),
       })
+      if (res.ok) markBoardFresh()
       return res.ok
     } catch {
       return false

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { candidatesFor, ownerOf, resolveHandle } from '../api/_lib/handles.js'
 import { MAX_HANDLE_LENGTH } from '../src/games/scoundrel/handle.js'
+import { assignedNameFor } from '../src/games/scoundrel/assignedName.js'
 
 // The uniqueness rule behind the board: one name, one owner, never released.
 //
@@ -19,6 +20,25 @@ describe('candidatesFor', () => {
     // register and the length; "Ashen Vagrant 47 2" would fit neither.
     expect(candidatesFor('Ashen Vagrant 47').slice(0, 4))
       .toEqual(['Ashen Vagrant 47', 'Ashen Vagrant 48', 'Ashen Vagrant 49', 'Ashen Vagrant 50'])
+  })
+
+  it('counts up from an assigned name, which has no space before its number (issue 43)', () => {
+    // The shape assignedNameFor really writes. Production stored a second
+    // "LostAlmoner3016" as "LostAlmoner3016 2" while the rule only matched
+    // "Ashen Vagrant 47".
+    expect(candidatesFor('LostAlmoner3016').slice(0, 3))
+      .toEqual(['LostAlmoner3016', 'LostAlmoner3017', 'LostAlmoner3018'])
+    for (const seed of ['a', 'device-1', 'xyz-123']) {
+      const name = assignedNameFor(seed)
+      const n = Number.parseInt(name.match(/\d+$/)[0], 10)
+      const next = candidatesFor(name)[1]
+      expect(next, name).toBe(name.replace(/\d+$/, String(n + 1).padStart(4, '0')))
+    }
+  })
+
+  it('keeps the width of a padded number', () => {
+    expect(candidatesFor('Almoner0099')[1]).toBe('Almoner0100')
+    expect(candidatesFor('Almoner9999')[1]).toBe('Almoner10000')
   })
 
   it('appends a counter to a name with no number', () => {
@@ -147,6 +167,11 @@ describe('resolveHandle', () => {
   it('counts up from an assigned name rather than suffixing it', async () => {
     await resolveHandle(sqlTag, 'Ashen Vagrant 47', 'owner-a')
     expect(await resolveHandle(sqlTag, 'Ashen Vagrant 47', 'owner-b')).toBe('Ashen Vagrant 48')
+  })
+
+  it('stores a second owner of an assigned name one number up (issue 43)', async () => {
+    await resolveHandle(sqlTag, 'LostAlmoner3016', 'owner-a')
+    expect(await resolveHandle(sqlTag, 'LostAlmoner3016', 'owner-b')).toBe('LostAlmoner3017')
   })
 
   it('claims atomically, without a read-then-write window', async () => {

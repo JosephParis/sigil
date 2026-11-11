@@ -75,7 +75,9 @@ End-to-end, against the deployed URL:
       owner claiming a taken name is stored disambiguated (`Rookwarden 2`), with
       the response reporting the stored name rather than the requested one
 - [ ] Confirm an assigned name counts up rather than being suffixed: a second
-      device asking for `Ashen Vagrant 47` should land on `Ashen Vagrant 48`
+      device asking for `Ashen Vagrant 47` should land on `Ashen Vagrant 48` --
+      **failed** 2026-11-11 (`LostAlmoner3016 2`); fixed by issue 43, re-check
+      after it deploys
 - [x] Open the board signed out and confirm **your own row reads "You"**. Guest
       self-marking is new (`device=` query param); it never worked before, and
       it is what makes two same-named rows survivable -- on the daily board,
@@ -308,6 +310,9 @@ renders its full text, `privacy@sigildeck.com` included.
 `/admin` if they should not stand.
 
 ### Found
+
+Filed as issues 43 (count-up), 44 (description), 46 (new players) and 45
+(cache), in that order below. 43–45 are fixed; 46 needs a decision.
 
 - **An assigned name never counts up.** `candidatesFor` (`api/_lib/handles.js`)
   counts up only from a name ending in a space and digits (`Ashen Vagrant 47`),

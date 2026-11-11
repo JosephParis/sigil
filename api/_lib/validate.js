@@ -17,7 +17,7 @@
 // ruleset. constants.js must stay environment-agnostic (no browser globals) for
 // this to keep working from a serverless function.
 import { SIGIL_TARGET, VERSION_HISTORY } from '../../src/games/scoundrel/constants.js'
-import { normalizeSeed } from '../../src/games/scoundrel/seed.js'
+import { normalizeSeed, isDailyDate, dailySeed } from '../../src/games/scoundrel/seed.js'
 
 // One request should never carry more than a device's short-outage backlog.
 // historyStore caps local history at 200, so a full resend is bounded by that;
@@ -121,6 +121,15 @@ export function validateRunRecord(record, now = Date.now()) {
   }
   if (record.seedChosen != null && typeof record.seedChosen !== 'boolean') {
     return { ok: false, reason: 'bad_seed_chosen' }
+  }
+
+  // --- daily (issue 42) -----------------------------------------------------
+  // The daily board lists by this date, so it must be a real one, and the seed
+  // is derived from it: a record whose seed is not that day's seed did not
+  // play that day's dungeon, whatever date it claims.
+  if (record.daily != null) {
+    if (!isDailyDate(record.daily)) return { ok: false, reason: 'bad_daily' }
+    if (record.seed !== dailySeed(record.daily)) return { ok: false, reason: 'daily_seed_mismatch' }
   }
 
   return { ok: true }

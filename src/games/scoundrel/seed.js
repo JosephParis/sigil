@@ -80,6 +80,47 @@ export function normalizeSeed(input) {
   return code
 }
 
+// -- The Daily Descent (issue 42) -----------------------------------------
+//
+// One seed per UTC day, the same for everyone on Earth at the same moment,
+// changing at 00:00 UTC. It is an ordinary 8-character seed, derived from the
+// date, so the seed board, links and history all work on it unchanged, and
+// the server can recompute it to check a record's claimed date.
+
+const DAILY_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
+
+// A real calendar date written YYYY-MM-DD, or false. 2026-02-30 is false.
+export function isDailyDate(date) {
+  if (typeof date !== 'string') return false
+  const m = DAILY_DATE.exec(date)
+  if (!m) return false
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+  return d.toISOString().slice(0, 10) === date
+}
+
+// Today's date in UTC, the day a daily started now belongs to.
+export function todayUtc(now = Date.now()) {
+  return new Date(now).toISOString().slice(0, 10)
+}
+
+// The day's seed, or null for something that is not a date.
+export function dailySeed(date) {
+  if (!isDailyDate(date)) return null
+  const rng = streamFor('daily', date)
+  let out = ''
+  for (let i = 0; i < SEED_LENGTH; i++) out += ALPHABET[Math.floor(rng() * ALPHABET.length)]
+  return out
+}
+
+// "10 Nov 2026", named in UTC so the label matches the board it belongs to
+// wherever the player is.
+export function formatDaily(date) {
+  if (!isDailyDate(date)) return ''
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString(undefined, {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
+  })
+}
+
 // ABCD-EFGH: two halves are easier to read back than eight characters.
 export function formatSeed(seed) {
   if (!seed) return ''

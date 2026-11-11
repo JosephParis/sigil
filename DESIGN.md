@@ -261,10 +261,10 @@ A tutorial-flavoured starter-room buff (guaranteed weapon + potion in the openin
 
 ## 7. Meta-progression (between runs) *(historical — never built)*
 
-**None of this shipped.** There is no Memory Slot, no Codex and no daily seed in
-the game; progression is entirely within a run. What did ship is the piece a
-daily seed would stand on: every run has a shareable seed (issue 38), and two
-players on one seed meet the same Trials (the promise is spelled out below). The
+**Most of this never shipped.** There is no Memory Slot and no Codex;
+progression is entirely within a run. What did ship is every run's shareable
+seed (issue 38), the promise two players on one seed get (spelled out below),
+and on top of it the **Daily Descent** (issue 42, described below). The
 section is kept because the *stance* below — no persistent stat boosts, every
 run a fresh dungeon — is still the position, and any future meta layer has to
 argue with it.
@@ -291,6 +291,29 @@ fixed, the rewards follow the path), not a bug to fix.
 flags. Each can legitimately change the Trials: ascension's
 `themeTierOffset` moves the tier bands, a mode's `lockTheme` overrides the
 roll, and `specialMonsters` widens the Tier 4 and 5 pools.
+
+### The Daily Descent *(current — issue 42, Joey, 2026-10-22)*
+
+- **One seed per UTC day**, the same for everyone at the same moment, changing
+  at 00:00 UTC. `dailySeed(date)` in `seed.js` derives an ordinary 8-character
+  seed from the date, so the seed board, links and history work on it
+  unchanged, and the server recomputes it to check a record.
+- **Fixed rules:** default mode, ascension 0, the player's own Boon unlocks
+  (the full pool while `library` is off). The opening visit hides the mode and
+  ascension pickers, and the run refuses to change either.
+- **The run carries its date** (`daily`), fixed when it starts, so an attempt
+  begun at 23:58 UTC counts for that day. Another seed entered on the opening
+  visit drops it.
+- **Unlimited attempts; every one counts.** The daily board
+  (`/api/leaderboard?daily=YYYY-MM-DD`) lists each player's best attempt with
+  at least one sigil, deaths included, ranked by sigils and then time.
+- **Off the main board.** A daily is `seedChosen`, since a player who has seen
+  the dungeon has a head start.
+- Entry points: *Play today's Daily* on the opening visit; *Try the Daily
+  again* and *Daily board* on a daily's end screen, which names the day. Run
+  history labels a daily with its date.
+- **Not built:** streaks or any count of days played, a daily for other modes
+  or ascensions, and weekly seeds. Parked in `docs/EXTENSIONS.md` §8.
 
 **One standing hazard: the `library` flag.** With it on, Boon offers come only
 from the Boons each player has unlocked, which is per-player history, not a

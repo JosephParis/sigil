@@ -116,6 +116,10 @@ export function buildRunRecord(state, user, handle = '', deviceId = null) {
     // runs off the main board, since replaying a known dungeon is a head start.
     seed: state.seed || null,
     seedChosen: state.seedChosen === true,
+    // The Daily Descent this run attempted (issue 42), 'YYYY-MM-DD' in UTC,
+    // or null. The daily board lists by it; the server checks it against the
+    // seed, which is derived from it.
+    daily: state.daily || null,
     accountId: user?.sub || GUEST_ID,
     // Opt-in display name for the public leaderboard. Null unless the player
     // set a handle in Settings.

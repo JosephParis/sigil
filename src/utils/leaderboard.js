@@ -53,13 +53,18 @@ export function entryDisplayName(entry) {
  *   which matters most when two rows happen to share a name. Sent only when
  *   there is no account, since an account is the better answer where it exists.
  * @param {number} [opts.limit] - rows to request (server caps at 100).
+ * @param {string} [opts.seed] - one seed's board instead of the main one.
+ * @param {string} [opts.daily] - one day's Daily Descent board, YYYY-MM-DD
+ *   (issue 42). Ranked by sigils then time, deaths included.
  * @param {AbortSignal} [opts.signal] - abort when the modal closes.
  * @returns {Promise<{ok: true, data: object} | {ok: false, reason: string}>}
  */
-export async function fetchLeaderboard({ accountId, deviceId, limit, seed, signal } = {}) {
+export async function fetchLeaderboard({ accountId, deviceId, limit, seed, daily, signal } = {}) {
   const params = new URLSearchParams()
-  // One seed's board instead of the main one (issue 39).
-  if (seed) params.set('seed', seed)
+  // One day's daily board (issue 42), or one seed's board (issue 39), instead
+  // of the main one.
+  if (daily) params.set('daily', daily)
+  else if (seed) params.set('seed', seed)
   const signedIn = accountId && accountId !== 'guest'
   if (signedIn) params.set('me', accountId)
   else if (deviceId) params.set('device', deviceId)

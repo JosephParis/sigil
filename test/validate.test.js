@@ -3,6 +3,7 @@ import {
   validateRunRecord, parseRunBatch, mayWriteAs, MAX_BATCH, MAX_PLAYER_NAME,
 } from '../api/_lib/validate.js'
 import { SIGIL_TARGET, VERSION_HISTORY, GAME_VERSION } from '../src/games/scoundrel/constants.js'
+import { dailySeed } from '../src/games/scoundrel/seed.js'
 
 // A record shaped like buildRunRecord's output, valid by construction. Tests
 // override single fields so each case isolates one rule.
@@ -40,6 +41,28 @@ describe('validateRunRecord — seed (issue 39)', () => {
     expect(reason(validateRunRecord(record({ seed: 'x'.repeat(5000) }), NOW))).toBe('bad_seed')
     expect(reason(validateRunRecord(record({ seed: 12345678 }), NOW))).toBe('bad_seed')
     expect(reason(validateRunRecord(record({ seedChosen: 'yes' }), NOW))).toBe('bad_seed_chosen')
+  })
+})
+
+describe('validateRunRecord — daily (issue 42)', () => {
+  const DAY = '2026-07-29'
+
+  it("accepts a daily whose seed is that day's, and a run with no daily", () => {
+    expect(validateRunRecord(record({ daily: DAY, seed: dailySeed(DAY), seedChosen: true }), NOW).ok).toBe(true)
+    expect(validateRunRecord(record({ daily: null }), NOW).ok).toBe(true)
+  })
+
+  it('refuses a date the daily board could not list', () => {
+    for (const daily of ['2026-02-30', '2026-7-29', '29/07/2026', '', 20260729, 'x'.repeat(5000)]) {
+      expect(reason(validateRunRecord(record({ daily, seed: 'K7Q2M9XD' }), NOW)), String(daily)).toBe('bad_daily')
+    }
+  })
+
+  it("refuses a daily whose seed is not that day's", () => {
+    // Claiming yesterday's board with today's dungeon, or any other seed.
+    expect(reason(validateRunRecord(record({ daily: DAY, seed: dailySeed('2026-07-28') }), NOW))).toBe('daily_seed_mismatch')
+    expect(reason(validateRunRecord(record({ daily: DAY, seed: 'K7Q2M9XD' }), NOW))).toBe('daily_seed_mismatch')
+    expect(reason(validateRunRecord(record({ daily: DAY, seed: null }), NOW))).toBe('daily_seed_mismatch')
   })
 })
 

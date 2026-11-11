@@ -6,7 +6,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest'
 import {
-  createRun, setRunSeed, setRunMode, descend, endDescentVictory, fleeRoom,
+  createRun, setRunSeed, setRunMode, setRunAscension, descend, endDescentVictory, fleeRoom,
 } from '../src/games/scoundrel/logic/lifecycle'
 import { playCard } from '../src/games/scoundrel/logic/combat'
 import { pickBoon, applyForgeEdit, skipForgeEdit, forgeActive } from '../src/games/scoundrel/logic/sanctuary'
@@ -18,6 +18,7 @@ import { buildRunRecord } from '../src/games/scoundrel/history'
 import {
   newSeed, normalizeSeed, formatSeed, streamFor, rngFor, playRoll, seedLink, SEED_LENGTH,
   parseChallenge, activeChallenge, MAX_CHALLENGER_NAME,
+  dailySeed, isDailyDate, todayUtc, formatDaily,
 } from '../src/games/scoundrel/seed'
 import { seededRng } from './support/state'
 
@@ -277,6 +278,82 @@ describe("the seed's promise (issue 40)", () => {
     for (let i = 0; i < one.steps.length; i++) {
       expect(two.steps[i], `step ${i}`).toEqual(one.steps[i])
     }
+  })
+})
+
+describe('the Daily Descent (issue 42)', () => {
+  const DAY = '2026-11-10'
+  const daily = (date = DAY) =>
+    createRun(seededRng(1), { seed: dailySeed(date), seedChosen: true, daily: date })
+
+  it('derives one canonical seed per day, the same every time', () => {
+    const seed = dailySeed(DAY)
+    expect(seed).toHaveLength(SEED_LENGTH)
+    expect(normalizeSeed(seed)).toBe(seed)
+    expect(dailySeed(DAY)).toBe(seed)
+  })
+
+  it('gives every day of a year its own seed', () => {
+    const seen = new Set()
+    const start = Date.UTC(2026, 0, 1)
+    for (let i = 0; i < 365; i++) {
+      seen.add(dailySeed(new Date(start + i * 86400000).toISOString().slice(0, 10)))
+    }
+    expect(seen.size).toBe(365)
+  })
+
+  it('has no seed for something that is not a date', () => {
+    for (const bad of ['2026-02-30', '2026-13-01', '2026-1-5', '20261110', '', null, 20261110]) {
+      expect(isDailyDate(bad), String(bad)).toBe(false)
+      expect(dailySeed(bad), String(bad)).toBeNull()
+    }
+    expect(isDailyDate('2028-02-29')).toBe(true)
+  })
+
+  it('turns over at 00:00 UTC, not at local midnight', () => {
+    expect(todayUtc(Date.parse('2026-11-10T23:59:59.999Z'))).toBe('2026-11-10')
+    expect(todayUtc(Date.parse('2026-11-11T00:00:00.000Z'))).toBe('2026-11-11')
+    // 8pm in Los Angeles on the 10th is already the 11th's Daily.
+    expect(todayUtc(Date.parse('2026-11-10T20:00:00-08:00'))).toBe('2026-11-11')
+  })
+
+  it('names the day in UTC', () => {
+    expect(formatDaily(DAY)).toMatch(/10/)
+    expect(formatDaily(DAY)).toMatch(/2026/)
+    expect(formatDaily('nope')).toBe('')
+  })
+
+  it('carries the date on the run, as an entered seed, on default rules', () => {
+    const s = daily()
+    expect(s.daily).toBe(DAY)
+    expect(s.seed).toBe(dailySeed(DAY))
+    expect(s.seedChosen).toBe(true)
+    expect(s.mode).toBe('default')
+    expect(s.ascension).toBe(0)
+    // The mode and ascension cannot be changed on a daily.
+    expect(setRunMode(s, 'hardcore')).toBe(s)
+    expect(setRunAscension(s, 3)).toBe(s)
+  })
+
+  it('stops being a daily once another seed is entered', () => {
+    const s = setRunSeed(daily(), SEED)
+    expect(s.seed).toBe(SEED)
+    expect(s.daily).toBeNull()
+  })
+
+  it('is no daily without a seed to play', () => {
+    expect(createRun(seededRng(1), { daily: DAY }).daily).toBeNull()
+  })
+
+  it('plays the same dungeon on every attempt that day', () => {
+    const first = descend(daily())
+    const again = descend(createRun(seededRng(77), { seed: dailySeed(DAY), seedChosen: true, daily: DAY }))
+    expect([...again.room, ...again.deck].map(face)).toEqual([...first.room, ...first.deck].map(face))
+  })
+
+  it('writes the date into the run record', () => {
+    expect(buildRunRecord(daily(), null).daily).toBe(DAY)
+    expect(buildRunRecord(createRun(seededRng(1), { seed: SEED }), null).daily).toBeNull()
   })
 })
 

@@ -21,7 +21,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 
 | Suite | Runner | Status |
 |---|---|---|
-| `test/validate.test.js` | vitest | 44 pass |
+| `test/validate.test.js` | vitest | 47 pass |
 | `test/runs.handler.test.js` | vitest | 22 pass |
 | `test/rateLimit.test.js` | vitest | 13 pass |
 | `test/audio.test.js` | vitest | 13 pass |
@@ -35,7 +35,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/themes.test.js` | vitest | 31 pass |
 | `test/handleDenylist.test.js` | vitest | 41 pass |
 | `test/moderation.handler.test.js` | vitest | 24 pass |
-| `test/leaderboard.handler.test.js` | vitest | 25 pass |
+| `test/leaderboard.handler.test.js` | vitest | 33 pass |
 | `test/merge.profiles.test.js` | vitest | 14 pass |
 | `test/save.handler.test.js` | vitest | 14 pass |
 | `test/stats.handler.test.js` | vitest | 14 pass |
@@ -52,11 +52,12 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `test/flags.test.js` | vitest | 5 pass |
-| `test/seed.test.js` | vitest | 42 pass |
+| `test/seed.test.js` | vitest | 52 pass |
 | `visual/copy-accuracy.spec.js` | dev | 19 pass |
 | `visual/seeds.spec.js` | dev | 7 pass |
 | `visual/seed-challenges.spec.js` | dev | 9 pass |
 | `visual/play-seed-from-history.spec.js` | dev | 6 pass |
+| `visual/daily-descent.spec.js` | dev | 5 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
 | `visual/robots-and-payload.spec.js` | dev | 10 pass |
@@ -77,7 +78,14 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 774 unit + 229 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Full suite: 795 unit + 234 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-11-11** on issue 42 (+21 unit: 10 in `seed.test.js`, 3 in
+`validate`, 8 in `leaderboard.handler`; +5 e2e in `visual/daily-descent.spec.js`),
+lint and build clean. Two old flakes showed under load, both reproduced on
+`main` without the change: `assignedName`'s slur sweep timing out at vitest's
+5s default (now given 30s), and `device-lab`'s verdict test reporting a 59px
+scroll in 2 of 4 runs either way. `feedback.handler` also failed once more and
+passed on every rerun.
 **Re-measured 2026-11-09** on issue 40 (+17 unit in `test/seed.test.js`: the
 full-run Trial test, 14 rule-set cases, one showing the rule sets differ, and
 the card-by-card run), lint and build clean, clean in one pass.
@@ -208,6 +216,8 @@ Forge and boon choices, and every descent exit; decided in a pure, tested tracke
 and the tutorial cue keep a static glow instead of a pulse).
 **41** (Play this seed from run history, under the same rule as a shared link;
 the seed shows in the desktop descent sidebar).
+**42** (the Daily Descent: one seed per UTC day, default rules, unlimited
+attempts, a daily board ranked by sigils then time; its prod checks are on 13).
 **40** (what a seed promises is in `DESIGN.md` §7 and held by tests over a full
 run, every ascension, special monsters on and off, and card by card).
 
@@ -451,7 +461,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [39](39-seed-challenges.md) | A seed can be shared, but not a time to beat on it | product | M | **done** |
 | [40](40-seed-guarantees.md) | What a seed promises is not written down or fully tested | product | S | **done** |
 | [41](41-play-seed-from-history.md) | A seed from an old run can only be replayed by typing it back in | product | S | **done** |
-| [42](42-daily-descent.md) | No Daily Descent: nothing gives everyone the same dungeon on the same day | product | M | open |
+| [42](42-daily-descent.md) | No Daily Descent: nothing gives everyone the same dungeon on the same day | product | M | **done** |
 
 ### P3 — quality, performance, accessibility
 
@@ -481,7 +491,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Two issues are open: 13 and 42. 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
+One issue is open: 13. 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09, and 42 (the Daily Descent) on 2026-11-11. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
 was built and shipped on 2026-10-09, and 39 (seed challenges) on 2026-10-12. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 

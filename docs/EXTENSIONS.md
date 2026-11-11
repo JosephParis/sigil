@@ -143,7 +143,20 @@ None of these grant raw power. They unlock breadth.
 
 ## 8. Daily and Weekly Seeds
 
-Already proposed (§7 DESIGN.md). Worth expanding:
+**The Daily Descent shipped** (issue 42, see `DESIGN.md` §7): one seed per UTC
+day on default rules, unlimited attempts, a daily board ranked by sigils then
+time. What follows is what has not been built.
+
+**Phase 3 of the seed plan, parked (Joey, 2026-10-22), not declined:**
+
+- **Weekly runs with a twist**: a weekly seed with one rule layered on (no
+  Forge, a locked Trial, double rooms), and its own board.
+- **Word seeds**: a seed typed as a word or phrase ("LANTERN") and hashed to a
+  code, so a seed can be shared out loud.
+- **Streaks**: a count of consecutive days a player has set a sigil on the
+  Daily.
+
+Older ideas from before seeds existed, kept for reference:
 
 - **Daily Coffin**: a fixed seed where everyone plays the same survivor, same Boon offers, same theme sequence, same Forge offers. Leaderboard by final HP at sigil 7. Optional sharing of the seed string for friends to attempt.
 - **Weekly Pilgrimage**: a longer seed, two-cycle (False Dawn), with a custom rule layered on (e.g. "no Forge"). Resets weekly.

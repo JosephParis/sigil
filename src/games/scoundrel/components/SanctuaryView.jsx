@@ -9,14 +9,14 @@ import { BoonOfferPanel, RunStatePanel, DeckPeekButton, DeckModal, LoadoutPanel,
 import { EditOfferPanel } from './forge'
 import { RulesInlinePanel, TutorialIntroPanel } from './rules'
 import { ModePickerPanel, ModeBadge } from './modes'
-import { SeedPanel } from './seed'
+import { SeedPanel, DailyPanel } from './seed'
 import { activeChallenge } from '../seed'
 import { LibraryPanel } from './library'
 import { AscensionPickerPanel, AscensionBadge } from './ascensions'
 import { audio } from '../audio'
 import { rankLabel, SUIT_GLYPH } from '../logic'
 
-export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked = 0, celebrateSigil = false, onSigilCelebrated, onOpenRules }) {
+export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked = 0, celebrateSigil = false, onSigilCelebrated, onOpenRules, onPlayDaily, onLeaveDaily }) {
   const isOpeningVisit = game.sigilsEarned === 0
   const needsBoon = !isOpeningVisit && !game.boonChosen && game.boonOffers.length > 0
   // Sequence is boon → forge edits → descend. The Forge grants a batch of edits
@@ -55,7 +55,9 @@ export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked
     // Ascension picker takes the rules' slot once the player has unlocked
     // the ladder. The "how to play" panel is for new players; once they've
     // beaten a run, they don't need it staring back at them.
-    const showAscensionPicker = ascensionUnlocked > 0 && isEnabled('ascensions')
+    // A daily is played on default rules (issue 42), so neither picker shows.
+    const daily = Boolean(game.daily)
+    const showAscensionPicker = !daily && ascensionUnlocked > 0 && isEnabled('ascensions')
     actionSlot = (
       <>
         {game.tutorialJustFinished && (
@@ -66,10 +68,12 @@ export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked
             </p>
           </section>
         )}
-        <ModePickerPanel
-          currentMode={game.mode}
-          onSelect={(id) => { audio.sfx('cardFlip'); setGame(g => setRunMode(g, id)) }}
-        />
+        {!daily && (
+          <ModePickerPanel
+            currentMode={game.mode}
+            onSelect={(id) => { audio.sfx('cardFlip'); setGame(g => setRunMode(g, id)) }}
+          />
+        )}
         {showAscensionPicker && (
           <AscensionPickerPanel
             currentLevel={game.ascension || 0}
@@ -77,7 +81,10 @@ export function SanctuaryView({ game, setGame, onSkipTutorial, ascensionUnlocked
             onSelect={(level) => { audio.sfx('cardFlip'); setGame(g => setRunAscension(g, level)) }}
           />
         )}
-        {game.seed && (
+        {game.seed && onPlayDaily && (
+          <DailyPanel game={game} onPlayDaily={onPlayDaily} onLeaveDaily={onLeaveDaily} />
+        )}
+        {game.seed && !daily && (
           <SeedPanel
             seed={game.seed}
             chosen={game.seedChosen}

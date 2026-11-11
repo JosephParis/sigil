@@ -1,7 +1,7 @@
 // Run seeds on screen (issue 38): see the seed, copy a link to it, and play
 // someone else's. The logic lives in seed.js; this file only shows it.
 import { useState } from 'react'
-import { formatSeed, normalizeSeed, seedLink, activeChallenge } from '../seed'
+import { formatSeed, normalizeSeed, seedLink, activeChallenge, formatDaily, todayUtc } from '../seed'
 import { GAME_VERSION } from '../constants'
 import { IS_STANDALONE, HOME_URL } from '../../../buildTarget.js'
 import { formatTime } from '../../../utils/leaderboard'
@@ -97,6 +97,97 @@ export function PlaySeedButton({ record, onPlay }) {
           {refusal}
         </p>
       )}
+    </div>
+  )
+}
+
+// -- The Daily Descent (issue 42) -------------------------------------------
+
+const dailyBtn = 'px-3 py-1.5 rounded-md border text-[12px] transition'
+
+// Opening visit. On an ordinary run: an offer to play today's Daily. On a
+// daily: which day it is, and a way back to the player's own dungeon. The
+// day's seed is shown here rather than in SeedPanel, since it is not one to
+// swap for a friend's.
+export function DailyPanel({ game, onPlayDaily, onLeaveDaily }) {
+  if (game.daily) {
+    return (
+      <section className="panel panel-warm p-4" data-testid="daily-panel">
+        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-rune">Daily Descent</div>
+          <button
+            type="button"
+            onClick={onLeaveDaily}
+            className="text-[12px] text-slate-400 hover:text-parchment underline underline-offset-2 transition"
+          >
+            Play your own dungeon instead
+          </button>
+        </div>
+        <div className="mt-1 flex items-baseline gap-3 flex-wrap">
+          <span className="text-parchment font-display text-lg" data-testid="daily-date">{formatDaily(game.daily)}</span>
+          <span className="font-mono text-slate-400 text-[13px] tracking-widest select-all" data-testid="opening-seed">
+            {formatSeed(game.seed)}
+          </span>
+        </div>
+        <p className="mt-1.5 text-[11px] text-slate-500 leading-snug">
+          Everyone plays this dungeon today, on default rules. Try it as often as you like
+          {IS_STANDALONE ? '.' : '; your best attempt goes on the daily board.'} A new one opens at 00:00 UTC.
+        </p>
+      </section>
+    )
+  }
+  return (
+    <section className="panel p-4" data-testid="daily-panel">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Daily Descent</div>
+          <p className="mt-1 text-[11px] text-slate-500 leading-snug">
+            One dungeon for everyone today, ranked by sigils, then time.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onPlayDaily}
+          className={`${dailyBtn} border-rune/60 text-rune hover:border-rune hover:bg-rune/10`}
+        >
+          Play today’s Daily
+        </button>
+      </div>
+    </section>
+  )
+}
+
+// End of a daily attempt: the day, another go, and the board. If the day has
+// turned over since the attempt began, the next go is the new day's Daily, and
+// the button says so.
+export function DailyOutcomePanel({ game, onPlayDaily, onOpenDailyBoard }) {
+  if (!game.daily) return null
+  const sameDay = todayUtc() === game.daily
+  const sigils = game.sigilsEarned || 0
+  return (
+    <div className="mb-3 short:mb-2 sm:mb-4 max-w-md w-full flex flex-col items-center gap-2" data-testid="daily-outcome">
+      <p className="text-[13px] text-parchment">
+        Daily Descent, {formatDaily(game.daily)}: {sigils} {sigils === 1 ? 'sigil' : 'sigils'}.
+        {sigils === 0 && ' Set one to make the board.'}
+      </p>
+      <div className="flex flex-wrap justify-center gap-1.5">
+        <button
+          type="button"
+          onClick={onPlayDaily}
+          className={`${dailyBtn} border-rune/60 text-rune hover:border-rune hover:bg-rune/10`}
+        >
+          {sameDay ? 'Try the Daily again' : 'Play today’s Daily'}
+        </button>
+        {!IS_STANDALONE && (
+          <button
+            type="button"
+            onClick={onOpenDailyBoard}
+            className={`${dailyBtn} border-stone-700 text-slate-300 hover:text-parchment hover:border-rune/60`}
+          >
+            Daily board
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -206,7 +297,9 @@ export function SeedChallengePanel({ game, record, onReplaySeed, onOpenSeedBoard
   const name = useEffectiveName()
   const anonymous = useAnonymous()
   const [shareState, setShareState] = useState('idle')
-  if (!game.seed || game.tutorial) return null
+  // A daily has its own panel (DailyOutcomePanel): its race is the daily
+  // board, not a friend's time on the seed.
+  if (!game.seed || game.tutorial || game.daily) return null
 
   const won = game.phase === 'victory'
   const challenge = activeChallenge(game)

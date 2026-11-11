@@ -4,7 +4,7 @@ import { RunSummary, EndingKitSection } from './RunSummary'
 import { buildRunRecord } from '../history'
 import { useEffectiveName, useAnonymous, MAX_HANDLE_LENGTH } from '../settings'
 import { nameSuggestions } from '../assignedName'
-import { SeedChallengePanel } from './seed'
+import { SeedChallengePanel, DailyOutcomePanel } from './seed'
 
 // Naming yourself, at the one moment you care who won.
 //
@@ -17,9 +17,12 @@ import { SeedChallengePanel } from './seed'
 // the reroll costs nothing. The free field is still there for the player who
 // arrived with a name in mind.
 //
-// Shown on victory only. Deaths are not ranked, so there is nothing to be
-// credited for and nothing to ask about.
-function LeaderboardNudge({ onClaimName, seedBoard = false }) {
+// Shown on victory only, except on a daily: the main and seed boards rank
+// wins alone, so a death there has nothing to be credited for, but the daily
+// board lists any attempt with a sigil (issue 42).
+// `board` names where the run is listed when it is not the main board: 'the
+// seed board' for an entered seed, 'the daily board' for a daily.
+function LeaderboardNudge({ onClaimName, board = null, what = 'victory' }) {
   const current = useEffectiveName()
   const anonymous = useAnonymous()
   const [open, setOpen] = useState(false)
@@ -50,8 +53,8 @@ function LeaderboardNudge({ onClaimName, seedBoard = false }) {
         {/* A run on an entered seed is kept off the main board (issue 38) and
             is listed only on that seed's board, so say which. */}
         {anonymous
-          ? `This victory is listed ${seedBoard ? 'on the seed board ' : ''}without a name.`
-          : <>This victory is listed {seedBoard ? 'on the seed board ' : ''}as <span className="text-rune">{current}</span>.</>}{' '}
+          ? `This ${what} is listed ${board ? `on ${board} ` : ''}without a name.`
+          : <>This {what} is listed {board ? `on ${board} ` : ''}as <span className="text-rune">{current}</span>.</>}{' '}
         <button
           onClick={reveal}
           className="text-rune underline underline-offset-2 hover:text-amber-300 transition"
@@ -111,7 +114,7 @@ function LeaderboardNudge({ onClaimName, seedBoard = false }) {
 
 // onBeginAgain wraps freshRun() in the root so this file doesn't
 // depend on save/load details.
-export function OutcomeView({ game, onBeginAgain, onClaimName, onReplaySeed, onOpenSeedBoard }) {
+export function OutcomeView({ game, onBeginAgain, onClaimName, onReplaySeed, onOpenSeedBoard, onPlayDaily, onOpenDailyBoard }) {
   const won = game.phase === 'victory'
   // Every victory now offers this, named or not: the run is on the board either
   // way, and the question is only whose name is against it.
@@ -154,8 +157,17 @@ export function OutcomeView({ game, onBeginAgain, onClaimName, onReplaySeed, onO
         {won ? 'ASCEND' : 'BEGIN AGAIN'}
       </button>
 
-      {won && <LeaderboardNudge onClaimName={onClaimName} seedBoard={game.seedChosen === true} />}
+      {/* A daily lists every attempt with a sigil, deaths included (issue 42),
+          so the name question comes up for those too. */}
+      {(won || (game.daily && game.sigilsEarned > 0)) && (
+        <LeaderboardNudge
+          onClaimName={onClaimName}
+          what={won ? 'victory' : 'run'}
+          board={game.daily ? 'the daily board' : game.seedChosen === true ? 'the seed board' : null}
+        />
+      )}
 
+      <DailyOutcomePanel game={game} onPlayDaily={onPlayDaily} onOpenDailyBoard={onOpenDailyBoard} />
       <SeedChallengePanel game={game} record={record} onReplaySeed={onReplaySeed} onOpenSeedBoard={onOpenSeedBoard} />
 
       <div className="w-full max-w-4xl grid grid-cols-[1.4fr_1fr] lg:grid-cols-2 gap-3 short:gap-2 sm:gap-5 items-start text-left">

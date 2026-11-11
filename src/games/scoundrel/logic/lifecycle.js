@@ -44,6 +44,12 @@ export function createRun(rng = Math.random, options = {}) {
   // it, and `rng` is only the fallback. `seedChosen` marks a seed the player
   // entered rather than one the game minted, which the leaderboard keeps
   // apart: replaying a dungeon you already know is not the same race.
+  //
+  // `daily` is the UTC date ('YYYY-MM-DD') of the Daily Descent this run is
+  // an attempt at (issue 42). The caller passes that day's seed with it; the
+  // date is fixed when the run starts, so one begun at 23:58 UTC counts for
+  // the day it began. A daily is played on default rules, so the mode and
+  // ascension setters below refuse to change it.
   const {
     tutorial = false,
     mode = DEFAULT_MODE,
@@ -52,6 +58,7 @@ export function createRun(rng = Math.random, options = {}) {
     seed = null,
     seedChosen = false,
     challenge = null,
+    daily = null,
   } = options
   const nextTheme = tutorial ? 'tutorial' : 'the_quiet'
 
@@ -84,6 +91,7 @@ export function createRun(rng = Math.random, options = {}) {
     // A friend's time to beat on this seed (issue 39): { seed, durationMs, by }.
     // Tied to the seed it came with, so entering a different seed drops it.
     challenge: seed && challenge ? { ...challenge, seed } : null,
+    daily: seed && daily ? daily : null,
     // Count of choice-driven rolls this descent (see playRoll in seed.js).
     playRolls: 0,
 
@@ -181,6 +189,7 @@ export function setRunMode(state, modeId) {
   if (state.phase !== 'sanctuary') return state
   if (state.sigilsEarned !== 0) return state
   if (state.tutorial) return state
+  if (state.daily) return state
   // Guard on MODES, not getMode: getMode falls back to the default mode and so
   // never reports an unknown id, which let a junk mode string be stored on the
   // run and stamped into its history record.
@@ -198,7 +207,8 @@ export function setRunSeed(state, seed) {
   if (state.tutorial) return state
   if (!seed || state.seed === seed) return state
   const challenge = state.challenge?.seed === seed ? state.challenge : null
-  return { ...state, seed, seedChosen: true, challenge }
+  // Any other seed is not the day's dungeon, so the run stops being a daily.
+  return { ...state, seed, seedChosen: true, challenge, daily: null }
 }
 
 // Change the run's ascension level. Same rules as setRunMode: pre-descent
@@ -207,6 +217,7 @@ export function setRunAscension(state, level) {
   if (state.phase !== 'sanctuary') return state
   if (state.sigilsEarned !== 0) return state
   if (state.tutorial) return state
+  if (state.daily) return state
   const clamped = Math.max(0, Math.floor(level || 0))
   if (state.ascension === clamped) return state
   return { ...state, ascension: clamped }

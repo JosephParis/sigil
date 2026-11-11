@@ -3,6 +3,7 @@ import { historyStore } from '../../../utils/historyStore'
 import { computeLifetimeStats } from '../history'
 import { RunSummary, EndingKitSection } from './RunSummary'
 import { PlaySeedButton } from './seed'
+import { formatDaily } from '../seed'
 import { IS_STANDALONE } from '../../../buildTarget.js'
 
 const OUTCOME_LABEL = { victory: 'Victory', death: 'Died', retired: 'Retired' }
@@ -64,6 +65,11 @@ function RunRow({ record, expanded, onToggle, onPlaySeed }) {
           </span>
           {record.ascension > 0 && (
             <span className="text-[11px] text-slate-500 shrink-0">A{record.ascension}</span>
+          )}
+          {record.daily && (
+            <span className="text-[11px] text-rune shrink-0" data-testid="history-daily">
+              Daily · {formatDaily(record.daily)}
+            </span>
           )}
         </span>
         <span className="flex items-center gap-2 shrink-0">

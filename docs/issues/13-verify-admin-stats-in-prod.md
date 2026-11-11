@@ -154,6 +154,20 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
 - [ ] The `rate_limits` table was created on first use and is being swept
 - [ ] The leaderboard still lists real victories after the 60s floor and the
       rooms/sigil cross-checks — confirm a genuine win is not filtered out
+- [ ] **Daily Descent board (issue 42).** Only testable against the real
+      database; dev has no `/api`, and the handler tests only assert the query.
+  - [ ] Play today's Daily and **die with at least one sigil**. Confirm the run
+        reaches `runs` with `record->>'daily'` set and appears on the daily
+        board (Daily board button on the end screen), ranked by sigils, then time
+  - [ ] Play it again and do better; confirm the board keeps **one row** for
+        you, your best, and that a worse third attempt does not replace it
+  - [ ] A death with no sigil is **not** listed
+  - [ ] The main board does **not** list the daily run (it is `seedChosen`)
+  - [ ] `GET /api/leaderboard?daily=2026-02-30` is a 400 `bad_daily`
+  - [ ] A hand-rolled POST to `/api/runs` with `daily` set and a different
+        day's seed is rejected `daily_seed_mismatch`
+  - [ ] After 00:00 UTC, "Play today's Daily" starts the new day's seed and
+        the board for the old day still shows its rows
 
 ## PostHog: unconfigured since launch, fixed and verified 2026-08-27
 

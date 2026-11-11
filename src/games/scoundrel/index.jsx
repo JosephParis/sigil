@@ -24,7 +24,7 @@ import { useRunAnalytics } from './analytics'
 import { isDevToolsEnabled, isCrashTestRequested } from './flags'
 import { audio } from './audio'
 import { settings } from './settings'
-import { newSeed, normalizeSeed, formatSeed, parseChallenge } from './seed'
+import { newSeed, normalizeSeed, formatSeed, parseChallenge, dailySeed, todayUtc } from './seed'
 import { GAME_VERSION } from './constants'
 
 // -- Save / load -------------------------------------------------------
@@ -201,6 +201,22 @@ function freshRun(sharedSeed = null, challenge = null) {
   })
 }
 
+// An attempt at today's Daily Descent (issue 42): the day's seed, past the
+// tutorial, on default rules (mode and ascension 0). The date is fixed here,
+// so an attempt begun at 23:58 UTC counts for that day. Entered, not minted:
+// a player who has seen the dungeon has a head start, so the main board
+// leaves dailies out, as it does any entered seed.
+function dailyRun(date = todayUtc()) {
+  return createRun(Math.random, {
+    tutorial: false,
+    unlockedBoons: loadLibrary(),
+    ascension: 0,
+    seed: dailySeed(date),
+    seedChosen: true,
+    daily: date,
+  })
+}
+
 // A shared link: /?seed=K7Q2-M9XD&v=0.4, plus &t=<seconds>&by=<name> when it
 // is a challenge (issue 39). Read once per page load and taken out
 // of the address bar, so a reload does not try to start the run again. Cached
@@ -296,6 +312,9 @@ export default function Scoundrel() {
   const [leaderboardOpen, setLeaderboardOpen] = useState(false)
   // Set when the board was opened for one seed (issue 39); null is the main board.
   const [leaderboardSeed, setLeaderboardSeed] = useState(null)
+  // Set when it was opened for one day's Daily Descent (issue 42).
+  const [leaderboardDaily, setLeaderboardDaily] = useState(null)
+  const closeLeaderboard = () => { setLeaderboardOpen(false); setLeaderboardSeed(null); setLeaderboardDaily(null) }
   const [homeOpen, setHomeOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
@@ -539,7 +558,7 @@ export default function Scoundrel() {
       else if (creditsOpen) setCreditsOpen(false)
       else if (cardLibraryOpen) setCardLibraryOpen(false)
       else if (historyOpen) setHistoryOpen(false)
-      else if (leaderboardOpen) { setLeaderboardOpen(false); setLeaderboardSeed(null) }
+      else if (leaderboardOpen) closeLeaderboard()
       else if (retireOpen) setRetireOpen(false)
       else if (tutorialReplayOpen) setTutorialReplayOpen(false)
       else if (loginOpen) setLoginOpen(false)
@@ -655,7 +674,8 @@ export default function Scoundrel() {
         open={leaderboardOpen}
         user={user}
         seed={leaderboardSeed}
-        onClose={() => { setLeaderboardOpen(false); setLeaderboardSeed(null) }}
+        daily={leaderboardDaily}
+        onClose={closeLeaderboard}
       />
       <HomeView
         open={homeOpen}
@@ -678,7 +698,7 @@ export default function Scoundrel() {
             <button onClick={() => setSeedNotice(null)} aria-label="Dismiss" className="text-slate-500 hover:text-parchment transition">✕</button>
           </div>
         )}
-        {game.phase === 'sanctuary' && <SanctuaryView game={game} setGame={setGame} onSkipTutorial={skipTutorial} ascensionUnlocked={ascensionUnlocked} celebrateSigil={sigilCelebrate} onSigilCelebrated={() => setSigilCelebrate(false)} onOpenRules={() => setRulesOpen(true)} />}
+        {game.phase === 'sanctuary' && <SanctuaryView game={game} setGame={setGame} onSkipTutorial={skipTutorial} ascensionUnlocked={ascensionUnlocked} celebrateSigil={sigilCelebrate} onSigilCelebrated={() => setSigilCelebrate(false)} onOpenRules={() => setRulesOpen(true)} onPlayDaily={() => setGame(dailyRun())} onLeaveDaily={() => setGame(freshRun())} />}
         {game.phase === 'descent' && <DescentView game={game} setGame={setGame} />}
         {(game.phase === 'gameover' || game.phase === 'victory') && (
           <OutcomeView
@@ -689,6 +709,10 @@ export default function Scoundrel() {
             // go is the point of a challenge.
             onReplaySeed={() => setGame(freshRun(game.seed, game.challenge))}
             onOpenSeedBoard={() => { setLeaderboardSeed(game.seed); setLeaderboardOpen(true) }}
+            // Another go at the Daily is always today's: an attempt that ran
+            // past midnight UTC offers the new day's.
+            onPlayDaily={() => setGame(dailyRun())}
+            onOpenDailyBoard={() => { setLeaderboardDaily(game.daily); setLeaderboardOpen(true) }}
           />
         )}
       </main>

@@ -25,6 +25,7 @@ function sqlTag(strings, ...vals) {
 vi.mock('@neondatabase/serverless', () => ({ neon: () => sqlTag }))
 
 const { default: handler } = await import('../api/leaderboard.js')
+const { dailySeed } = await import('../src/games/scoundrel/seed.js')
 
 function mockRes() {
   const res = { statusCode: null, body: null, headers: {} }
@@ -284,5 +285,89 @@ describe('/api/leaderboard — whose row is whose', () => {
     await get({ me: 'sub-123', device: 'dev-a' })
     expect(built('b.device_id')).toHaveLength(0)
     expect(built('b.account_id = ')).toHaveLength(1)
+  })
+})
+
+// -- The daily board (issue 42) ---------------------------------------------
+//
+// A different race from the main and seed boards: every finished attempt on
+// the day counts, deaths included, ranked by sigils and then time. As above,
+// what is asserted is the query the handler builds; the ranking itself is
+// Postgres's job.
+
+describe('/api/leaderboard — daily board', () => {
+  const DAY = '2026-11-10'
+
+  async function dailyRanked() {
+    const res = await get({ daily: DAY })
+    const ranked = rankedFragments()
+    return { res, ranked, text: ranked.map(q => q.text).join('\n') }
+  }
+
+  it('serves one day, matched on the date and that day\'s seed', async () => {
+    const { res, ranked } = await dailyRanked()
+    expect(res.statusCode).toBe(200)
+    expect(res.body.daily).toBe(DAY)
+    expect(res.body.seed).toBe(dailySeed(DAY))
+    expect(ranked).toHaveLength(1)
+    // Bound values, never spliced in, and the day is the only one asked for.
+    expect(ranked[0].text).toContain("r.record->>'daily' = ?")
+    expect(ranked[0].vals).toContain(DAY)
+    expect(ranked[0].vals).toContain(dailySeed(DAY))
+  })
+
+  it('ranks most sigils first, then fastest', async () => {
+    const { text } = await dailyRanked()
+    expect(text).toContain('order by sigils_earned desc, duration_ms asc, ended_at asc')
+    // And picks each player's best by the same order.
+    expect(text).toContain('order by r.sigils_earned desc, r.duration_ms asc, r.ended_at asc')
+  })
+
+  it('counts deaths, and leaves out attempts with no sigil', async () => {
+    const { text } = await dailyRanked()
+    // The main board's victory-only filter is not applied...
+    expect(text).not.toContain("r.outcome = 'victory'")
+    // ...the 60s floor only binds victories...
+    expect(text).toContain("r.outcome <> 'victory' or r.duration_ms >= ?")
+    // ...and a run with no sigil is not on the board.
+    expect(text).toContain('coalesce(r.sigils_earned, 0) >= 1')
+  })
+
+  it('requires at least as many rooms as sigils', async () => {
+    const { text } = await dailyRanked()
+    expect(text).toContain("(r.record->>'roomsEntered')::int")
+    expect(text).toContain('>= r.sigils_earned')
+  })
+
+  it('keeps the main board\'s identity and moderation rules', async () => {
+    const { text } = await dailyRanked()
+    expect(text).toContain('dev is not true')
+    expect(text).toContain('blocked_accounts')
+    // One row per player, guests told apart by device.
+    expect(text).toContain('partition by r.account_id')
+    expect(text).toContain("r.record->>'deviceId'")
+  })
+
+  it('refuses a date that is not one', async () => {
+    for (const daily of ['2026-02-30', 'today', '2026-11-1']) {
+      queries.length = 0
+      const res = await get({ daily })
+      expect(res.statusCode, daily).toBe(400)
+      expect(res.body.error).toBe('bad_daily')
+      expect(rankedFragments()).toHaveLength(0)
+    }
+  })
+
+  it('returns sigils on each entry, since they rank first', async () => {
+    canned = [['order by rank asc', [{ ...ROW, sigils_earned: 6 }]]]
+    const { body } = await get({ daily: DAY })
+    expect(body.entries[0].sigilsEarned).toBe(6)
+  })
+
+  it('leaves the main board as it was', async () => {
+    await get()
+    const [ranked] = rankedFragments()
+    expect(ranked.text).toContain("r.outcome = 'victory'")
+    expect(ranked.text).not.toContain("r.record->>'daily'")
   })
 })

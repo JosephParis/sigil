@@ -1,10 +1,10 @@
 import { neon } from '@neondatabase/serverless'
 import { ensureRunsTable } from './_lib/runsTable.js'
 import { ensureBlockedTable } from './_lib/moderation.js'
-import { normalizeSeed } from '../src/games/scoundrel/seed.js'
+import { normalizeSeed, isDailyDate, dailySeed } from '../src/games/scoundrel/seed.js'
 
 /**
- * GET /api/leaderboard — the public fastest-victory board.
+ * GET /api/leaderboard — the public fastest-victory board, and the daily board.
  *
  * Unlike /api/stats this endpoint is unauthenticated: every player sees it, so
  * it returns only what the board renders and never the raw run blob. In
@@ -50,6 +50,11 @@ import { normalizeSeed } from '../src/games/scoundrel/seed.js'
  *                   can be shown which row is theirs.
  *   version=<v>     scope the board to one balance version (see GAME_VERSION).
  *                   Absent = all versions.
+ *   daily=<date>    the Daily Descent board for one UTC day, YYYY-MM-DD
+ *                   (issue 42). A different race from the others: every
+ *                   finished attempt counts, deaths included, ranked by sigils
+ *                   then time, one row per player (their best). 400 if the
+ *                   date is not a real one. Takes precedence over seed=.
  *
  * Requires DATABASE_URL. Without it the endpoint 503s and the client shows the
  * board as unavailable; play is never affected.
@@ -165,6 +170,64 @@ function rankedBest(versionCond, poolCond) {
   )`
 }
 
+// The daily board (issue 42): one day's Daily Descent, every finished attempt
+// with at least one sigil, ranked by sigils (most first) and then time
+// (fastest first). Deaths count: a daily is a race to get deepest, not only to
+// escape. One row per player, their best by the same order, partitioned
+// exactly as the main board is (see rankedBest) so a guest is told apart by
+// device in both places.
+//
+// Floors, as on the main board but for a board where deaths are listed:
+// - the 60s floor applies to victories only; a quick death is legitimately
+//   quick;
+// - any listed run must have entered at least as many rooms as it has sigils,
+//   since each sigil is a descent cleared and every descent has rooms. Daily
+//   records are all new enough to carry roomsEntered, so a missing or junk
+//   value reads as 0 and the row is left out.
+//
+// The seed is matched as well as the date. The validator already refuses a
+// record whose seed is not its date's seed; this keeps the board honest about
+// rows that predate that check.
+function rankedDaily(versionCond, date, seed) {
+  return sql`(
+    select account_id, ascension, sigils_earned, duration_ms, ended_at, mode,
+           game_version, player_name, device_id,
+           row_number() over (
+             order by sigils_earned desc, duration_ms asc, ended_at asc
+           ) rank
+    from (
+      select r.*, nullif(btrim(r.record->>'playerName'), '') player_name,
+             nullif(r.record->>'deviceId', '') device_id,
+             row_number() over (
+               partition by r.account_id,
+                            case when r.account_id = ${GUEST_ID}
+                                 then coalesce(
+                                        nullif(r.record->>'deviceId', ''),
+                                        btrim(r.record->>'playerName'),
+                                        '')
+                                 else '' end
+               order by r.sigils_earned desc, r.duration_ms asc, r.ended_at asc
+             ) player_rn
+      from runs r
+      where r.record->>'daily' = ${date}
+        and r.record->>'seed' = ${seed}
+        and r.dev is not true
+        and not exists (
+          select 1 from blocked_accounts bl where bl.account_id = r.account_id
+        )
+        and coalesce(r.sigils_earned, 0) >= 1
+        and (r.outcome <> 'victory' or r.duration_ms >= ${MIN_DURATION_MS})
+        and coalesce(
+              case when r.record->>'roomsEntered' ~ '^[0-9]+$'
+                   then (r.record->>'roomsEntered')::int end,
+              0
+            ) >= r.sigils_earned
+        ${versionCond}
+    ) per_player
+    where player_rn = 1
+  )`
+}
+
 // Shape a DB row for the wire: numbers coerced out of bigint strings, and both
 // account_id and device_id dropped so no caller ever learns another player's
 // identity. `you` is computed here, server-side, precisely so the comparison
@@ -205,6 +268,11 @@ export default async function handler(req, res) {
   // over a fresh run, and is left out. A legacy row has no seedChosen and
   // reads as a fresh run. An unreadable seed is a 400, not the main board,
   // so a mangled link cannot pass the global ranking off as the seed's.
+  // ?daily= is the Daily Descent board (issue 42), a different ranking, so it
+  // is checked first and a bad date is a 400 rather than any other board.
+  const dailyRaw = typeof req.query?.daily === 'string' ? req.query.daily.trim() : ''
+  const daily = dailyRaw && isDailyDate(dailyRaw) ? dailyRaw : null
+  if (dailyRaw && !daily) return res.status(400).json({ error: 'bad_daily' })
   const seedRaw = typeof req.query?.seed === 'string' ? req.query.seed : ''
   const seed = seedRaw ? normalizeSeed(seedRaw) : null
   if (seedRaw && !seed) return res.status(400).json({ error: 'bad_seed' })
@@ -224,7 +292,9 @@ export default async function handler(req, res) {
     // board working on a deployment where no run has been mirrored yet, rather
     // than 500ing on a missing table.
     await Promise.all([ensureRunsTable(sql), ensureBlockedTable(sql)])
-    const ranked = rankedBest(versionCond, poolCond)
+    const ranked = daily
+      ? rankedDaily(versionCond, daily, dailySeed(daily))
+      : rankedBest(versionCond, poolCond)
     const [rows, selfRows] = await Promise.all([
       sql`select * from ${ranked} b order by rank asc limit ${limit}`,
       // The caller's own best, fetched separately so their rank still shows
@@ -246,7 +316,8 @@ export default async function handler(req, res) {
     return res.status(200).json({
       generatedAt: Date.now(),
       version: version || null,
-      seed,
+      seed: daily ? dailySeed(daily) : seed,
+      daily,
       limit,
       entries,
       // Present but outside the page? The client renders it as a pinned row.

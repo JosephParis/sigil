@@ -112,6 +112,14 @@ export function dailySeed(date) {
   return out
 }
 
+// The link that opens today's Daily (issue 46). It carries no date on
+// purpose: it means "whatever today's is" wherever and whenever it is opened,
+// which is what a post or a message asks someone to play. A link to one
+// particular day's dungeon is an ordinary seed link.
+export function dailyLink(origin = globalThis.location?.origin || '') {
+  return `${origin}/?daily`
+}
+
 // "10 Nov 2026", named in UTC so the label matches the board it belongs to
 // wherever the player is.
 export function formatDaily(date) {

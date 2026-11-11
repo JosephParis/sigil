@@ -230,9 +230,12 @@ function takeLaunchLink() {
   try {
     const params = new URLSearchParams(window.location.search)
     const raw = params.get('seed')
-    if (raw === null) return launchLink
-    launchLink = { seed: normalizeSeed(raw), version: params.get('v'), challenge: parseChallenge(params) }
-    for (const key of ['seed', 'v', 't', 'by']) params.delete(key)
+    // /?daily opens today's Daily (issue 46). It wins over a seed in the same
+    // link: it is the more specific ask, and both cannot be played at once.
+    if (params.has('daily')) launchLink = { daily: true }
+    else if (raw === null) return launchLink
+    else launchLink = { seed: normalizeSeed(raw), version: params.get('v'), challenge: parseChallenge(params) }
+    for (const key of ['daily', 'seed', 'v', 't', 'by']) params.delete(key)
     const qs = params.toString()
     window.history.replaceState(
       window.history.state, '',
@@ -267,6 +270,19 @@ function openingGame() {
   const saved = loadSavedGame()
   const link = takeLaunchLink()
   if (!link) return { game: saved || freshRun(), notice: null }
+  if (link.daily) {
+    // Already on today's Daily: carry on with it, mid-descent or not.
+    if (saved?.daily === todayUtc() && !runHasNothingToLose(saved)) return { game: saved, notice: null }
+    if (!runHasNothingToLose(saved)) {
+      return {
+        game: saved,
+        notice: 'You have a run in progress, so today’s Daily was not started. Finish or retire this run, then choose Play today’s Daily on the opening screen.',
+      }
+    }
+    // Past the tutorial for this run only, as a seed link is: the player came
+    // for the Daily. The tutorial is still waiting for their next own run.
+    return { game: dailyRun(), notice: null }
+  }
   if (!link.seed) {
     return { game: saved || freshRun(), notice: 'That link’s seed could not be read, so this is your own dungeon.' }
   }

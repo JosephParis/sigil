@@ -187,6 +187,11 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
         fails only on `daily_seed_mismatch`
   - [ ] After 00:00 UTC, "Play today's Daily" starts the new day's seed and
         the board for the old day still shows its rows
+  - [ ] **The Daily link (issue 46).** In a private window, open
+        `https://sigildeck.com/?daily`: today's Daily opens with no tutorial,
+        and the address bar drops `?daily`. *Copy Daily link* copies
+        `https://sigildeck.com/?daily`, and pasting it into Discord shows the
+        site's card
 
 ## PostHog: unconfigured since launch, fixed and verified 2026-08-27
 

@@ -312,6 +312,13 @@ roll, and `specialMonsters` widens the Tier 4 and 5 pools.
 - Entry points: *Play today's Daily* on the opening visit; *Try the Daily
   again* and *Daily board* on a daily's end screen, which names the day. Run
   history labels a daily with its date.
+- **The link `/?daily`** (issue 46, Joey, 2026-11-11) opens today's Daily
+  directly, past the tutorial for that run only, as a seed link does. It has
+  no date, so it means today's wherever it is opened. It never replaces a run
+  in progress (today's Daily in progress carries on). *Copy Daily link* on
+  the Daily's panels copies it, rather than the seed, which would put a
+  friend's run off the board. The first visit without it still opens the
+  tutorial, which does not offer the Daily.
 - **Not built:** streaks or any count of days played, a daily for other modes
   or ascensions, and weekly seeds. Parked in `docs/EXTENSIONS.md` §8.
 

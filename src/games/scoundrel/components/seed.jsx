@@ -1,7 +1,7 @@
 // Run seeds on screen (issue 38): see the seed, copy a link to it, and play
 // someone else's. The logic lives in seed.js; this file only shows it.
 import { useState } from 'react'
-import { formatSeed, normalizeSeed, seedLink, activeChallenge, formatDaily, todayUtc } from '../seed'
+import { formatSeed, normalizeSeed, seedLink, activeChallenge, formatDaily, todayUtc, dailyLink } from '../seed'
 import { GAME_VERSION } from '../constants'
 import { IS_STANDALONE, HOME_URL } from '../../../buildTarget.js'
 import { formatTime } from '../../../utils/leaderboard'
@@ -41,6 +41,29 @@ function CopySeedButton({ seed, version, className = '' }) {
       className={`text-rune underline underline-offset-2 hover:text-amber-300 transition ${className}`}
     >
       {state === 'copied' ? 'Link copied' : state === 'failed' ? 'Copy the code by hand' : 'Copy link'}
+    </button>
+  )
+}
+
+// Copy the link to today's Daily (issue 46), not the seed: a friend on the
+// bare seed would be playing it off the daily board.
+function CopyDailyButton({ className = '' }) {
+  const [state, setState] = useState('idle')
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(dailyLink(IS_STANDALONE ? HOME_URL : undefined))
+      setState('copied')
+    } catch {
+      setState('failed')
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className={className}
+    >
+      {state === 'copied' ? 'Link copied' : state === 'failed' ? 'Copy failed: share sigildeck.com/?daily' : 'Copy Daily link'}
     </button>
   )
 }
@@ -133,6 +156,7 @@ export function DailyPanel({ game, onPlayDaily, onLeaveDaily }) {
           Everyone plays this dungeon today, on default rules. Try it as often as you like
           {IS_STANDALONE ? '.' : '; your best attempt goes on the daily board.'} A new one opens at 00:00 UTC.
         </p>
+        <CopyDailyButton className="mt-1.5 text-[12px] text-rune underline underline-offset-2 hover:text-amber-300 transition" />
       </section>
     )
   }
@@ -186,6 +210,9 @@ export function DailyOutcomePanel({ game, onPlayDaily, onOpenDailyBoard }) {
           >
             Daily board
           </button>
+        )}
+        {sameDay && (
+          <CopyDailyButton className={`${dailyBtn} border-stone-700 text-slate-300 hover:text-parchment hover:border-rune/60`} />
         )}
       </div>
     </div>

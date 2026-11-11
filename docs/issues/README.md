@@ -55,12 +55,13 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `test/flags.test.js` | vitest | 5 pass |
-| `test/seed.test.js` | vitest | 52 pass |
+| `test/seed.test.js` | vitest | 53 pass |
 | `visual/copy-accuracy.spec.js` | dev | 22 pass |
 | `visual/seeds.spec.js` | dev | 7 pass |
 | `visual/seed-challenges.spec.js` | dev | 9 pass |
 | `visual/play-seed-from-history.spec.js` | dev | 6 pass |
 | `visual/daily-descent.spec.js` | dev | 6 pass |
+| `visual/daily-link.spec.js` | dev | 7 pass |
 | `visual/leaderboard-name.spec.js` | dev | 12 pass |
 | `visual/itch-build.spec.js` | dev | 11 pass |
 | `visual/robots-and-payload.spec.js` | dev | 10 pass |
@@ -81,7 +82,9 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 804 unit + 238 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Full suite: 805 unit + 245 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-11-11** on issue 46 (+1 unit in `seed.test.js`, +7 e2e in
+`visual/daily-link.spec.js`).
 **Re-measured 2026-11-11** on issues 43–45 (+9 unit: 3 in `handles`, 6 in the
 new `boardFreshness`; +4 e2e: 3 in `copy-accuracy`, 1 in `daily-descent`),
 lint and build clean. One more old flake: `audio-assets`' one-shot length test
@@ -473,7 +476,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [43](43-assigned-name-count-up.md) | A second owner of an assigned name gets " 2" added instead of the next number | api | S | **done** |
 | [44](44-board-description-anonymous.md) | The board says unnamed runs are listed as Anonymous; they go up under the assigned name | copy | S | **done** |
 | [45](45-board-stale-after-run.md) | Right after a run, the board can still show your previous best | product | S | **done** |
-| [46](46-daily-hidden-from-new-players.md) | A brand-new player cannot see the Daily Descent until the tutorial is skipped | product | S | open — needs Joey |
+| [46](46-daily-hidden-from-new-players.md) | A brand-new player cannot see the Daily Descent until the tutorial is skipped | product | S | **done** |
 
 ### P3 — quality, performance, accessibility
 
@@ -503,7 +506,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Two issues are open: 13 and 46, and 46 waits on Joey's pick of option. 43, 44 and 45, found in 13's production check on 2026-11-11, closed the same day. 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09, and 42 (the Daily Descent) on 2026-11-11. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
+One issue is open: 13. 43–46, found in its production check on 2026-11-11, closed the same day (46 as Joey's option 2, the `/?daily` link). 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09, and 42 (the Daily Descent) on 2026-11-11. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
 was built and shipped on 2026-10-09, and 39 (seed challenges) on 2026-10-12. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 

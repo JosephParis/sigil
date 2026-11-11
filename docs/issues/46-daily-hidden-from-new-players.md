@@ -4,7 +4,8 @@ title: "A brand-new player cannot see the Daily Descent until the tutorial is sk
 priority: P2
 area: product
 effort: S
-status: open
+status: done
+branch: issue-43-46-prod-findings
 ---
 
 ## Problem
@@ -31,8 +32,40 @@ never played. It needs a decision, not just a fix.
    *Skip tutorial*.
 4. Both 2 and 3.
 
+## Decided (Joey, 2026-11-11)
+
+Option 2: the `/?daily` link. The first visit without it stays the
+tutorial.
+
 ## Acceptance criteria
 
-- [ ] Joey picks an option (record it here with the date).
-- [ ] Whatever is built has a Playwright test from a fresh profile (no
-      `tutorialCompleted` key).
+- [x] Joey picks an option (record it here with the date).
+- [x] `/?daily` on a fresh profile opens today's Daily, past the tutorial for
+      that run only, and takes `daily` out of the address bar.
+- [x] A plain first visit still opens the tutorial.
+- [x] It never replaces a run in progress (it says so instead), carries on
+      with today's Daily if that is the run in progress, and wins over a
+      seed in the same link.
+- [x] The Daily's panels copy the link, not the seed.
+- [x] Playwright from a fresh profile (no `tutorialCompleted` key); the
+      tests fail without the launch code (checked: 5 of 7; the other two
+      assert what the link must not change).
+- [ ] Production: the issue 13 box for the link.
+
+## Done (2026-11-11)
+
+- **The link** is `dailyLink()` in `seed.js`: `<origin>/?daily`, with no date,
+  so it means today's wherever it is opened. A link to one day's dungeon is
+  an ordinary seed link.
+- **Opening it** (`takeLaunchLink` / `openingGame` in `index.jsx`) follows
+  the seed link's rules: read once, taken out of the address bar, never
+  over a run with something to lose. The tutorial is skipped for that run
+  only; `tutorialCompleted` is not set, so the player's next own run still
+  starts with it.
+- **Sharing**: *Copy Daily link* on the Daily's opening panel, and on its end
+  screen while the day is still today. Before this, the only copy on a
+  Daily was the seed line's, which hands a friend the bare seed: the same
+  dungeon, but off the daily board. That one stays as it is, since it says
+  "Seed" beside it.
+- **Tests**: +1 unit (`seed.test.js`), +7 e2e (`visual/daily-link.spec.js`).
+- GAME_VERSION unchanged.

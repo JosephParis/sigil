@@ -18,7 +18,7 @@ import { buildRunRecord } from '../src/games/scoundrel/history'
 import {
   newSeed, normalizeSeed, formatSeed, streamFor, rngFor, playRoll, seedLink, SEED_LENGTH,
   parseChallenge, activeChallenge, MAX_CHALLENGER_NAME,
-  dailySeed, isDailyDate, todayUtc, formatDaily,
+  dailySeed, isDailyDate, todayUtc, formatDaily, dailyLink,
 } from '../src/games/scoundrel/seed'
 import { seededRng } from './support/state'
 
@@ -278,6 +278,13 @@ describe("the seed's promise (issue 40)", () => {
     for (let i = 0; i < one.steps.length; i++) {
       expect(two.steps[i], `step ${i}`).toEqual(one.steps[i])
     }
+  })
+})
+
+describe('the Daily link (issue 46)', () => {
+  it('carries no date, so it opens whatever day it is opened on', () => {
+    expect(dailyLink('https://sigildeck.com')).toBe('https://sigildeck.com/?daily')
+    expect(new URL(dailyLink('https://sigildeck.com')).searchParams.has('daily')).toBe(true)
   })
 })
 

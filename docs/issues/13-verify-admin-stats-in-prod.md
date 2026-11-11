@@ -31,16 +31,19 @@ Checking takes minutes now and is unrecoverable later.
 
 Environment, in Vercel:
 
-- [ ] `DATABASE_URL` set and reachable (all endpoints 503 without it)
-- [ ] `ADMIN_TOKEN` set — `api/stats.js` requires it as a bearer token
-- [ ] `CRON_SECRET` set — `api/cron-backfill-runs.js` accepts either this or `ADMIN_TOKEN`
-- [ ] `GOOGLE_CLIENT_ID` + `SESSION_SECRET` set (`api/auth.js` 503s without both)
+- [x] `DATABASE_URL` set and reachable (all endpoints 503 without it) -- set
+      (`vercel env ls`), and runs were written and read back, 2026-11-11
+- [x] `ADMIN_TOKEN` set — `api/stats.js` requires it as a bearer token -- set,
+      2026-11-11 (the name was listed; the value was not read)
+- [x] `CRON_SECRET` set — `api/cron-backfill-runs.js` accepts either this or `ADMIN_TOKEN` -- set, 2026-11-11
+- [x] `GOOGLE_CLIENT_ID` + `SESSION_SECRET` set (`api/auth.js` 503s without both) -- set, 2026-11-11
 - [x] `VITE_GOOGLE_CLIENT_ID` set at build time — without it `LoginModal` silently falls back to the local "dev sign-in" form, which must **not** happen in production. **Verified 2026-08-22** against the deploy of `2cfeb5e`: a real `...apps.googleusercontent.com` id is present in the lazy-loaded `scoundrel-*` chunk (grepping `index-*.js` alone reports a false negative — `LoginModal` is not in the entry bundle)
 - [x] `VITE_PUBLIC_POSTHOG_TOKEN` + `VITE_PUBLIC_POSTHOG_HOST` set — was **absent until 2026-08-27**, so production recorded zero events from launch until then. Set in Vercel and **verified live** on the deploy of `c63bea9`: events and session recordings ingest with HTTP 200. See below, including the bot-detection trap that makes this easy to mis-verify.
 
 End-to-end, against the deployed URL:
 
-- [ ] Play one real run to completion. Confirm it appears in `runs`.
+- [x] Play one real run to completion. Confirm it appears in `runs`. -- five
+      guest Daily runs, 2026-11-11, read back through the daily board
 - [ ] `/admin` accepts `ADMIN_TOKEN` via `TokenGate` and renders. All 19
       aggregations in `api/stats.js` return without error on a near-empty
       dataset — several are prone to divide-by-zero or null-band edge cases when
@@ -73,13 +76,16 @@ End-to-end, against the deployed URL:
       the response reporting the stored name rather than the requested one
 - [ ] Confirm an assigned name counts up rather than being suffixed: a second
       device asking for `Ashen Vagrant 47` should land on `Ashen Vagrant 48`
-- [ ] Open the board signed out and confirm **your own row reads "You"**. Guest
+- [x] Open the board signed out and confirm **your own row reads "You"**. Guest
       self-marking is new (`device=` query param); it never worked before, and
-      it is what makes two same-named rows survivable
+      it is what makes two same-named rows survivable -- on the daily board,
+      2026-11-11
 - [x] Confirm no `deviceId` or `account_id` appears anywhere in the
       `/api/leaderboard` response body -- clean on 2026-10-05, 9 entries
 - [ ] Confirm the weekly cron (`0 4 * * 1` → `/api/cron-backfill-runs`) is
-      registered in Vercel and returns 200 when triggered manually
+      registered in Vercel and returns 200 when triggered manually --
+      **registered** (`vercel crons list`, 2026-11-11); the manual trigger is
+      still to do
 - [ ] Sign in on a second device; confirm history merges both ways (and see issue 09)
 
 Carried over from issue 04 (markup and assets are tested, but no scraper or real
@@ -93,7 +99,10 @@ device was involved):
       the Vercel-provided variable already resolves to the custom apex
 - [ ] Mobile Chrome offers "Add to Home screen", and the installed icon is the
       maskable one rather than a cropped square
-- [ ] Run Lighthouse and confirm the PWA installability checks pass
+- [x] Run Lighthouse and confirm the PWA installability checks pass --
+      Lighthouse 12 dropped its PWA category, so this used Chrome's own
+      `Page.getInstallabilityErrors`: none, 2026-11-11. The manifest parses
+      clean and all four icons serve, the maskable 512 included
 
 Carried over from issue 06:
 
@@ -131,11 +140,14 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
       `mayWriteAs` — and a record valid enough to reach it would write a junk row
       to the production table if the gate were broken. `mayWriteAs` itself has 7
       unit tests; what is untested is only the deployed wiring.
-- [ ] A **guest** run still reaches `runs` with no token
+- [x] A **guest** run still reaches `runs` with no token -- 2026-11-11
 - [ ] Signed-in and guest feedback both still submit
-- [ ] A hand-rolled POST to `/api/runs` claiming someone else's `accountId` is
-      rejected with 401
-- [ ] Hammering `/api/runs` past 30/min returns 429 with `Retry-After`
+- [x] A hand-rolled POST to `/api/runs` claiming someone else's `accountId` is
+      rejected with 401 -- `401 account_not_authenticated` with no token and
+      with a forged one, 2026-11-11 (the probe was `dev: true`, so it could
+      not have reached a board even if the gate had failed)
+- [x] Hammering `/api/runs` past 30/min returns 429 with `Retry-After` -- the
+      31st request in a minute got 429 with `Retry-After: 60`, 2026-11-11
 - [ ] **Moderation (issue 08) end to end.** None of this can run locally — there
       is no `/api` in `vite dev` or `vite preview`, so the panel has never made a
       real request:
@@ -156,16 +168,21 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
       rooms/sigil cross-checks — confirm a genuine win is not filtered out
 - [ ] **Daily Descent board (issue 42).** Only testable against the real
       database; dev has no `/api`, and the handler tests only assert the query.
-  - [ ] Play today's Daily and **die with at least one sigil**. Confirm the run
+  - [x] Play today's Daily and **die with at least one sigil**. Confirm the run
         reaches `runs` with `record->>'daily'` set and appears on the daily
         board (Daily board button on the end screen), ranked by sigils, then time
-  - [ ] Play it again and do better; confirm the board keeps **one row** for
+  - [x] Play it again and do better; confirm the board keeps **one row** for
         you, your best, and that a worse third attempt does not replace it
-  - [ ] A death with no sigil is **not** listed
-  - [ ] The main board does **not** list the daily run (it is `seedChosen`)
-  - [ ] `GET /api/leaderboard?daily=2026-02-30` is a 400 `bad_daily`
+  - [x] A death with no sigil is **not** listed
+  - [ ] The main board does **not** list the daily run (it is `seedChosen`) --
+        not shown yet: every daily run so far is a death, and the main board
+        lists only victories anyway. Needs a daily **victory**
+  - [x] `GET /api/leaderboard?daily=2026-02-30` is a 400 `bad_daily`
   - [ ] A hand-rolled POST to `/api/runs` with `daily` set and a different
-        day's seed is rejected `daily_seed_mismatch`
+        day's seed is rejected `daily_seed_mismatch` -- the response reads
+        `400 no_valid_records`, which is what a batch with nothing valid in
+        it reports; the same record run through `validateRunRecord` locally
+        fails only on `daily_seed_mismatch`
   - [ ] After 00:00 UTC, "Play today's Daily" starts the new day's seed and
         the board for the old day still shows its rows
 
@@ -258,6 +275,73 @@ far below the ~1,500–2,000 go point, so the window is for bugs, comprehension
 and feel; balance waits for a larger batch 2. It opens on `GAME_VERSION` `0.4`
 with issue 11's defaults unchanged, so the runs already on the board are
 comparable with it. No balance freeze is imposed beyond not flipping flags.
+
+## Verified against production, 2026-11-11 (deploy of `1e4d46c`)
+
+Done by Claude from this machine, with no secrets read. The Vercel CLI is
+logged in as Joey and was used only to list env var **names**, deployments and
+crons. Runs were played in a real (headless) Chromium against
+`https://sigildeck.com` by clicking the game, not by posting records by hand. A
+solver using the game's own logic found a line through descent 1 of the day's
+seed (`PNFCJQ0Z`); the driver compared the live save with the simulation after
+every click, and they matched throughout.
+
+The boxes ticked above carry their evidence beside them. What happened on the
+daily board:
+
+| Attempt | Device | Result | Board after |
+|---|---|---|---|
+| 1 | A | death, 1 sigil, 8:28 | listed as `LostAlmoner3016`, the assigned name (Settings never opened) |
+| 2 | A | death, 1 sigil, 0:44 | still one row for A, now 0:44 |
+| 3 | A | death, 1 sigil, 1:59 | unchanged: 0:44 |
+| 4 | A | death, 0 sigils | not listed |
+| 5 | B, name typed as `LostAlmoner3016` | death, 1 sigil, 0:45 | a second row, stored as `LostAlmoner3016 2` |
+
+The live UI agreed: *Daily board* from the end screen showed the row as
+**You** with "1 sigil" beside 00:44, and run history labelled each of A's runs
+"Daily · Nov 11, 2026". One guest feedback note was sent (202); it starts
+"[Test from the issue 13 production check" and is safe to delete. `/privacy`
+renders its full text, `privacy@sigildeck.com` included.
+
+**Test data left in production:** the two rows on the 2026-11-11 daily board
+(and A's other attempts in `runs`), and that feedback note. Delete them from
+`/admin` if they should not stand.
+
+### Found
+
+- **An assigned name never counts up.** `candidatesFor` (`api/_lib/handles.js`)
+  counts up only from a name ending in a space and digits (`Ashen Vagrant 47`),
+  but `assignedNameFor` writes names with no spaces (`LostAlmoner3016`). So a
+  second owner of an assigned name is stored as `LostAlmoner3016 2`, not
+  `LostAlmoner3017`. The count-up box above stays open because it fails as
+  written. Low stakes (19 million names make a collision rare) and a small fix.
+- **The board's description is out of date.** `LeaderboardModal.jsx:163` says
+  "Your runs are listed as Anonymous until you set a leaderboard name in
+  Settings", but a run with no name set is listed under the assigned name.
+- **A new player cannot see the Daily.** The first visit opens the tutorial,
+  and *Play today's Daily* appears only after *Skip tutorial* (or finishing
+  it). Possibly intended; worth deciding before a post that leads with the
+  Daily.
+- **The board is cached at the edge** (`s-maxage=60,
+  stale-while-revalidate=300`), so right after a run *Daily board* can show the
+  previous best for a minute or more. The main board is the same. The first
+  read after attempt 2 still showed the 8:28 row.
+
+### Still needs Joey
+
+- Everything behind `ADMIN_TOKEN`: `/admin`, the 19 aggregations,
+  `VersionRange`, band verdicts, the feedback view, and all of moderation.
+- A signed-in run, signing in on a second device, and `/api/claim` renames.
+- Wins: the assigned-name win, your own handle, "don't list a name", and a
+  daily victory for the main-board exclusion. The solver could probably find
+  a full 10-descent line, but it would also have to choose every Boon and
+  Forge edit, so a win is not cheap to automate.
+- Triggering the cron (`vercel crons run /api/cron-backfill-runs`); the
+  permission check here refused it.
+- A real phone for *Add to Home screen*, a paste into Discord or Slack for the
+  share card (every `og:` and `twitter:` tag is present and absolute), and
+  PostHog's person profiles.
+- After 00:00 UTC: the next day's seed, and the old day's board still listing.
 
 ## Verified against production, 2026-10-05
 

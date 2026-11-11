@@ -48,8 +48,10 @@ player's view.
 - [x] The board request carries `fresh` when there is one, and not otherwise.
 - [x] An open board refetches with the new value when the event fires
       (Playwright, board via `page.route`).
-- [ ] Production: finish a daily attempt, open *Daily board* at once, and see
-      the new row within a few seconds (issue 13).
+- [x] Production: finish a daily attempt, open *Daily board* at once, and see
+      the new row within a few seconds (issue 13). -- 2026-11-11, deploy of
+      `30225df`: the board's one request carried a `fresh=` value set by the
+      run's confirmation, and the new row (`LostAlmoner3017`) was on it
 
 ## Done (2026-11-11)
 

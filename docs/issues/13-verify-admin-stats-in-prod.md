@@ -74,10 +74,10 @@ End-to-end, against the deployed URL:
 - [ ] Confirm the `handles` table is created on first write and that a second
       owner claiming a taken name is stored disambiguated (`Rookwarden 2`), with
       the response reporting the stored name rather than the requested one
-- [ ] Confirm an assigned name counts up rather than being suffixed: a second
+- [x] Confirm an assigned name counts up rather than being suffixed: a second
       device asking for `Ashen Vagrant 47` should land on `Ashen Vagrant 48` --
-      **failed** 2026-11-11 (`LostAlmoner3016 2`); fixed by issue 43, re-check
-      after it deploys
+      **failed** 2026-11-11 (`LostAlmoner3016 2`); fixed by issue 43, and a
+      third device then landed on `LostAlmoner3017` the same day
 - [x] Open the board signed out and confirm **your own row reads "You"**. Guest
       self-marking is new (`device=` query param); it never worked before, and
       it is what makes two same-named rows survivable -- on the daily board,
@@ -189,7 +189,8 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
         the board for the old day still shows its rows
   - [ ] **The Daily link (issue 46).** In a private window, open
         `https://sigildeck.com/?daily`: today's Daily opens with no tutorial,
-        and the address bar drops `?daily`. *Copy Daily link* copies
+        and the address bar drops `?daily` (both seen 2026-11-11; the paste
+        below is what is left). *Copy Daily link* copies
         `https://sigildeck.com/?daily`, and pasting it into Discord shows the
         site's card
 

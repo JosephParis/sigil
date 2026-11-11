@@ -50,7 +50,9 @@ tutorial.
 - [x] Playwright from a fresh profile (no `tutorialCompleted` key); the
       tests fail without the launch code (checked: 5 of 7; the other two
       assert what the link must not change).
-- [ ] Production: the issue 13 box for the link.
+- [x] Production: the issue 13 box for the link. -- a fresh profile opening
+      `https://sigildeck.com/?daily` got today's Daily with no tutorial and a
+      clean address bar, 2026-11-11
 
 ## Done (2026-11-11)
 

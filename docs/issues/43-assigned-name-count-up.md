@@ -38,8 +38,10 @@ get ` 2`, ` 3`, ...
 - [x] `resolveHandle` stores a second owner of `LostAlmoner3016` as
       `LostAlmoner3017`.
 - [x] The new tests fail on the old code (checked: 3 fail).
-- [ ] Production: re-run the issue 13 box "a second device asking for an
-      assigned name lands one number up".
+- [x] Production: re-run the issue 13 box "a second device asking for an
+      assigned name lands one number up". -- a third device asking for
+      `LostAlmoner3016` was stored as `LostAlmoner3017`, 2026-11-11, on the
+      deploy of `30225df`
 
 ## Done (2026-11-11)
 

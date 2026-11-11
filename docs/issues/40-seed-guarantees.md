@@ -4,7 +4,8 @@ title: "What a seed promises is not written down or fully tested"
 priority: P2
 area: product
 effort: S
-status: open
+status: done
+branch: issue-40-seed-guarantees
 ---
 
 ## The rule (Joey, 2026-10-14)
@@ -121,17 +122,47 @@ What the tests cover today (`test/seed.test.js`):
 
 ## To do
 
-- [ ] Extend the Trial test to a full run of 10 descents, with the two
+- [x] Extend the Trial test to a full run of 10 descents, with the two
       players' choices diverging from the first sanctuary. Assert the Trials
       and Long Night children match at every descent.
-- [ ] Repeat it at each ascension level and with `specialMonsters` on. The
+- [x] Repeat it at each ascension level and with `specialMonsters` on. The
       rule is per rule set, so check it holds within each one, not just at A0.
-- [ ] A same-choices test that plays rooms: two runs on one seed (with
+- [x] A same-choices test that plays rooms: two runs on one seed (with
       different fallback rngs, as the existing walks use) take the same
       actions card by card, including at least one choice-driven roll, and
       their states match step by step (ignoring card ids).
-- [ ] Say the rule in `DESIGN.md` §7, where seeds are described, so a future
+- [x] Say the rule in `DESIGN.md` §7, where seeds are described, so a future
       change knows what it must not break.
+
+## Done (2026-11-09)
+
+Both rules held; no game code changed. All new tests are in
+`test/seed.test.js`, under "the seed's promise (issue 40)":
+
+- **A full run.** Two players on `K7Q2M9XD` walk all 10 descents
+  (`SIGIL_TARGET`), parting at the first sanctuary (different Boon, one forges,
+  one skips). Trials and Long Night children match at every descent. The test
+  also asserts the choices really diverged and that The Long Night came up.
+- **Every rule set.** The same pair at ascensions 0 to `ASCENSION_MAX`, with
+  `specialMonsters` off and on (14 cases, `ascensions` flag on so the level
+  counts). One more test shows A6 rolls different Trials from A0 on this seed,
+  so the loop compares genuinely different rule sets.
+- **Card by card.** Two runs on the seed with different fallback rngs play
+  every room, taking the first playable card and fleeing when none can be
+  played, through all 10 descents to victory. Their states match at every step
+  (about 450 steps), ignoring card ids, `forgeInscribedIds` (a list of ids),
+  the clock and the fallback rng. The walk makes 35 choice-driven rolls
+  (Carrion is descent 10 on this seed). Both players are held at 999 HP after
+  each descent starts, or the walk dies in the first room; HP feeds no roll.
+- **The tests can fail.** Checked by breaking the code on purpose and putting
+  it back: keying the Trial stream on the Boon and kit counts fails all 16
+  Trial tests; taking combat rolls from the fallback rng fails the card-by-card
+  test.
+- `DESIGN.md` §7 gains "What a seed promises", and its old line that a seed
+  "plays the same dungeon for anyone who enters it" (more than is promised) is
+  corrected.
+- Gate: lint and build clean, 774 unit + 229 e2e pass, 1 known skip.
+- **GAME_VERSION: unchanged.** No game code changed; `0.4` stays.
 
 ## Not in scope
 

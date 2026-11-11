@@ -263,10 +263,43 @@ A tutorial-flavoured starter-room buff (guaranteed weapon + potion in the openin
 
 **None of this shipped.** There is no Memory Slot, no Codex and no daily seed in
 the game; progression is entirely within a run. What did ship is the piece a
-daily seed would stand on: every run has a shareable seed (issue 38), and the
-same seed plays the same dungeon for anyone who enters it. The section is kept because the
-*stance* below — no persistent stat boosts, every run a fresh dungeon — is still
-the position, and any future meta layer has to argue with it.
+daily seed would stand on: every run has a shareable seed (issue 38), and two
+players on one seed meet the same Trials (the promise is spelled out below). The
+section is kept because the *stance* below — no persistent stat boosts, every
+run a fresh dungeon — is still the position, and any future meta layer has to
+argue with it.
+
+### What a seed promises *(current — issue 40, Joey, 2026-10-14)*
+
+Two players on the same seed, under the same rules, get:
+
+1. **The same Trials, whatever they do.** Descent N has the same Trial (and,
+   for The Long Night, the same two children) for everyone on the seed, no
+   matter which Boons they took, what they forged, or how they played the
+   descents before it.
+2. **The same run if they do the same things.** Two players who make every
+   choice alike, in the sanctuary and in combat, see exactly the same thing at
+   every step: the same deck in the same order, the same offers, the same
+   Forge grants, the same rolls.
+
+Nothing else is promised. Once two players choose differently, the deck order,
+the Boon offers, a Wormwood mute and the combat rolls may all differ. That is
+by design (the same split as Slay the Spire's seeds: the map and bosses are
+fixed, the rewards follow the path), not a bug to fix.
+
+"The same rules" means the same `GAME_VERSION`, mode, ascension and feature
+flags. Each can legitimately change the Trials: ascension's
+`themeTierOffset` moves the tier bands, a mode's `lockTheme` overrides the
+roll, and `specialMonsters` widens the Tier 4 and 5 pools.
+
+How the code keeps it: each Trial is rolled from its own stream
+(`theme:<sigils>`, `theme-children:<sigils>`) that reads only the seed, the
+sigil count and the earlier Trials; every other gameplay roll goes through
+`rngFor` or `playRoll` (`seed.js`), and choice-driven combat rolls are
+numbered within the descent. `test/seed.test.js` ("the seed's promise") holds
+both rules over a full run, at every ascension, with and without special
+monsters, and card by card through every room. A change that breaks it fails
+there.
 
 Deliberately light. The point is for each run to start as a real, playable dungeon, not a stat-stick grind.
 

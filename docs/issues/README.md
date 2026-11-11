@@ -52,7 +52,7 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `test/nameSync.test.js` | vitest | 15 pass |
 | `test/analyticsEvents.test.js` | vitest | 16 pass |
 | `test/flags.test.js` | vitest | 5 pass |
-| `test/seed.test.js` | vitest | 25 pass |
+| `test/seed.test.js` | vitest | 42 pass |
 | `visual/copy-accuracy.spec.js` | dev | 19 pass |
 | `visual/seeds.spec.js` | dev | 7 pass |
 | `visual/seed-challenges.spec.js` | dev | 9 pass |
@@ -77,7 +77,10 @@ Baseline: `npm run lint` clean, `npm run build` clean. Test suite as it stands:
 | `visual/mobile-touch.spec.js` | dev | 3 pass |
 | `visual/fonts.spec.js` | dev | 5 pass |
 
-**Full suite: 757 unit + 229 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Full suite: 774 unit + 229 e2e passed, 1 skipped (`card-library`, parked by issue 12's decision).**
+**Re-measured 2026-11-09** on issue 40 (+17 unit in `test/seed.test.js`: the
+full-run Trial test, 14 rule-set cases, one showing the rule sets differ, and
+the card-by-card run), lint and build clean, clean in one pass.
 **Re-measured 2026-11-09** on issue 41 (+6 e2e in
 `visual/play-seed-from-history.spec.js`), lint and build clean. The loaded run
 saw one `device-lab` test time out on `page.goto`; it does the same with the
@@ -205,6 +208,8 @@ Forge and boon choices, and every descent exit; decided in a pure, tested tracke
 and the tutorial cue keep a static glow instead of a pulse).
 **41** (Play this seed from run history, under the same rule as a shared link;
 the seed shows in the desktop descent sidebar).
+**40** (what a seed promises is in `DESIGN.md` §7 and held by tests over a full
+run, every ascension, special monsters on and off, and card by card).
 
 **All P0 blockers are closed.** Live at **https://sigildeck.com** since
 2026-08-06, with the privacy mailbox, auth and DNS all verified against the
@@ -444,7 +449,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 | [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
 | [38](38-shareable-run-seeds.md) | No shareable run seeds: two players never play the same dungeon | product | L | **done** |
 | [39](39-seed-challenges.md) | A seed can be shared, but not a time to beat on it | product | M | **done** |
-| [40](40-seed-guarantees.md) | What a seed promises is not written down or fully tested | product | S | open |
+| [40](40-seed-guarantees.md) | What a seed promises is not written down or fully tested | product | S | **done** |
 | [41](41-play-seed-from-history.md) | A seed from an old run can only be replayed by typing it back in | product | S | **done** |
 | [42](42-daily-descent.md) | No Daily Descent: nothing gives everyone the same dungeon on the same day | product | M | open |
 
@@ -476,7 +481,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-Three issues are open: 13, 40 and 42. 41 (play a seed from history) closed on 2026-11-09. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
+Two issues are open: 13 and 42. 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
 was built and shipped on 2026-10-09, and 39 (seed challenges) on 2026-10-12. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 

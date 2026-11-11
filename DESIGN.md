@@ -292,6 +292,13 @@ flags. Each can legitimately change the Trials: ascension's
 `themeTierOffset` moves the tier bands, a mode's `lockTheme` overrides the
 roll, and `specialMonsters` widens the Tier 4 and 5 pools.
 
+**One standing hazard: the `library` flag.** With it on, Boon offers come only
+from the Boons each player has unlocked, which is per-player history, not a
+rule. Two players making identical choices could then be offered different
+Boons, breaking rule 2. It is off at launch (pinned by issue 11), so every
+player draws from the full pool. Before it is ever turned on, a seeded run
+must draw from the full pool regardless.
+
 How the code keeps it: each Trial is rolled from its own stream
 (`theme:<sigils>`, `theme-children:<sigils>`) that reads only the seed, the
 sigil count and the earlier Trials; every other gameplay roll goes through

@@ -188,8 +188,11 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
         `400 no_valid_records`, which is what a batch with nothing valid in
         it reports; the same record run through `validateRunRecord` locally
         fails only on `daily_seed_mismatch`
-  - [ ] After 00:00 UTC, "Play today's Daily" starts the new day's seed and
-        the board for the old day still shows its rows
+  - [x] After 00:00 UTC, "Play today's Daily" starts the new day's seed and
+        the board for the old day still shows its rows -- 2026-11-12 00:01 UTC,
+        an end screen from the 11th offered *Play today's Daily*, which started
+        `N6P2CG4X` (the server's seed for the 12th); the 11th's board still
+        listed its 3 rows
   - [ ] **The Daily link (issue 46).** In a private window, open
         `https://sigildeck.com/?daily`: today's Daily opens with no tutorial,
         and the address bar drops `?daily` (both seen 2026-11-11; the paste
@@ -355,7 +358,6 @@ Filed as issues 43 (count-up), 44 (description), 46 (new players) and 45
 - A real phone for *Add to Home screen*, a paste into Discord or Slack for the
   share card (every `og:` and `twitter:` tag is present and absolute), and
   PostHog's person profiles.
-- After 00:00 UTC: the next day's seed, and the old day's board still listing.
 
 ## Verified against production, 2026-10-05
 

@@ -113,36 +113,53 @@ function load() {
 /**
  * Report what the frame actually did, on the same terms the guard asserts:
  * whether the document scrolls, and what scale the fit stage settled on.
- * Measured a beat after load so late fonts and the card deal have landed.
+ *
+ * Read once the frame has settled, not at a fixed delay: fonts loaded, then
+ * the same reading six samples running (600ms), and never before 900ms so the
+ * card deal has landed. A single read 900ms after load caught a frame mid-fit
+ * when the machine was busy (a 59px "scroll" the guard never saw). Capped at
+ * 10s, after which the last reading stands.
  */
-function measure(frame, vp, out) {
-  setTimeout(() => {
-    let r
-    try {
-      const doc = frame.contentDocument
-      const de = doc.documentElement
-      const stage = doc.querySelector('.mobile-stage')
-      const scale = stage
-        ? Number(frame.contentWindow.getComputedStyle(stage).getPropertyValue('--stage-scale')) || 1
-        : 1
-      r = { over: de.scrollHeight - de.clientHeight, scale }
-    } catch {
-      out.textContent = 'could not read frame'
-      return
+function read(frame) {
+  const doc = frame.contentDocument
+  const de = doc.documentElement
+  const stage = doc.querySelector('.mobile-stage')
+  const scale = stage
+    ? Number(frame.contentWindow.getComputedStyle(stage).getPropertyValue('--stage-scale')) || 1
+    : 1
+  return { over: de.scrollHeight - de.clientHeight, scale }
+}
+
+async function measure(frame, vp, out) {
+  const start = performance.now()
+  let r, last = '', same = 0
+  try {
+    await frame.contentDocument.fonts?.ready
+    while (true) {
+      await new Promise(done => setTimeout(done, 100))
+      r = read(frame)
+      const key = `${r.over}|${r.scale}`
+      same = key === last ? same + 1 : 0
+      last = key
+      const elapsed = performance.now() - start
+      if ((same >= 5 && elapsed >= 900) || elapsed >= 10000) break
     }
-    const pct = Math.round(r.scale * 100)
-    if (r.over > 1) {
-      out.className = 'verdict no'
-      out.textContent = `✗ scrolls — ${r.over}px over`
-    } else if (r.scale < 1) {
-      out.className = 'verdict scaled'
-      out.textContent = `✓ fits — scaled to ${pct}%`
-    } else {
-      out.className = 'verdict ok'
-      out.textContent = '✓ fits — no scaling'
-    }
-    summarise()
-  }, 900)
+  } catch {
+    out.textContent = 'could not read frame'
+    return
+  }
+  const pct = Math.round(r.scale * 100)
+  if (r.over > 1) {
+    out.className = 'verdict no'
+    out.textContent = `✗ scrolls — ${r.over}px over`
+  } else if (r.scale < 1) {
+    out.className = 'verdict scaled'
+    out.textContent = `✓ fits — scaled to ${pct}%`
+  } else {
+    out.className = 'verdict ok'
+    out.textContent = '✓ fits — no scaling'
+  }
+  summarise()
 }
 
 function summarise() {

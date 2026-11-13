@@ -59,6 +59,11 @@ test('every registered cue resolves and is real audio', async ({ request }) => {
  * envelope. Done in-page because the browser already has an MP3 decoder and the
  * test runner does not -- the alternative is either a byte-count heuristic,
  * which cannot tell one bell from three, or another dependency.
+ *
+ * Callers park the tab on robots.txt, not the app: decoding needs only a
+ * same-origin page, and the app's page could be reloaded under the test by
+ * the dev server ("Execution context was destroyed"), which failed it now
+ * and then.
  */
 async function analyseCue(page, url) {
   return page.evaluate(async (src) => {
@@ -91,7 +96,7 @@ function onsets(peaks) {
 }
 
 test('the one-shot cues are a sane length for a screen transition', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/robots.txt')
   // Long enough to land, short enough not to outstay the outcome screen.
   for (const path of ['/audio/music/victory.mp3', '/audio/music/gameover.mp3']) {
     const { duration } = await analyseCue(page, path)
@@ -105,7 +110,7 @@ test('the death cue is a single bell, struck once, at the very start', async ({ 
   // short piece of music you sat through rather than a death sound. It also
   // opened on ~0.3s of the source recording's room tone, so the strike landed
   // late against the screen it punctuates.
-  await page.goto('/')
+  await page.goto('/robots.txt')
   const { duration, peaks } = await analyseCue(page, '/audio/music/gameover.mp3')
 
   expect(duration, 'a single toll should not run long').toBeLessThan(12)

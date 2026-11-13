@@ -87,10 +87,12 @@ End-to-end, against the deployed URL:
       2026-11-11
 - [x] Confirm no `deviceId` or `account_id` appears anywhere in the
       `/api/leaderboard` response body -- clean on 2026-10-05, 9 entries
-- [ ] Confirm the weekly cron (`0 4 * * 1` → `/api/cron-backfill-runs`) is
+- [x] Confirm the weekly cron (`0 4 * * 1` → `/api/cron-backfill-runs`) is
       registered in Vercel and returns 200 when triggered manually --
-      **registered** (`vercel crons list`, 2026-11-11); the manual trigger is
-      still to do
+      **registered** (`vercel crons list`, 2026-11-11); triggered by Joey with
+      `vercel crons run` at 2026-11-13 10:25 UTC, and the request log shows
+      `GET /api/cron-backfill-runs` answered **200**. (In Git Bash the path
+      needs `MSYS_NO_PATHCONV=1`, or it is rewritten to a Windows path.)
 - [ ] Sign in on a second device; confirm history merges both ways (and see issue 09)
 
 Carried over from issue 04 (markup and assets are tested, but no scraper or real
@@ -353,8 +355,6 @@ Filed as issues 43 (count-up), 44 (description), 46 (new players) and 45
   daily victory for the main-board exclusion. The solver could probably find
   a full 10-descent line, but it would also have to choose every Boon and
   Forge edit, so a win is not cheap to automate.
-- Triggering the cron (`vercel crons run /api/cron-backfill-runs`); the
-  permission check here refused it.
 - A real phone for *Add to Home screen*, a paste into Discord or Slack for the
   share card (every `og:` and `twitter:` tag is present and absolute), and
   PostHog's person profiles.

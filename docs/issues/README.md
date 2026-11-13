@@ -464,7 +464,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 |---|---|---|---|---|
 | [11](11-feature-flag-defaults.md) | Decide feature flag defaults (6 of 7 off) | product | S | **done** |
 | [12](12-unreachable-glossary-and-card-library.md) | Card library + Boons/Trials glossary unreachable | product | S | **done** |
-| [13](13-verify-admin-stats-in-prod.md) | Verify `/api/stats` + `/admin` in prod before inviting anyone | product | S | open |
+| [13](13-verify-admin-stats-in-prod.md) | Verify `/api/stats` + `/admin` in prod before inviting anyone | product | S | done |
 | [14](14-anonymous-handle-copy-mismatch.md) | **BUG** UI promises "Anonymous" listing; server excludes it | bug | S | **done** |
 | [27](27-save-reset-outside-crash-path.md) | No save reset for a run stuck without crashing | product | S | **done** |
 | [34](34-analytics-funnel-gaps.md) | The funnel cannot see the tutorial, where batch 1 starts | product | M | **done** |
@@ -506,7 +506,7 @@ shipped to users on `0.4` yet, so sharing is usually fine.
 
 ## Pick order
 
-One issue is open: 13. 43–46, found in its production check on 2026-11-11, closed the same day (46 as Joey's option 2, the `/?daily` link). 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09, and 42 (the Daily Descent) on 2026-11-11. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
+No issues are open: 13 (the production check) closed on 2026-11-13, Joey judging what was left unnecessary for the first batch. 43–46, found in it on 2026-11-11, closed the same day (46 as Joey's option 2, the `/?daily` link). 41 (play a seed from history) and 40 (seed guarantees) closed on 2026-11-09, and 42 (the Daily Descent) on 2026-11-11. 17 (reduced motion) merged on 2026-10-11; 38 (run seeds)
 was built and shipped on 2026-10-09, and 39 (seed challenges) on 2026-10-12. This section is the ordering rule —
 it beats any largest-effort-first default, including an unattended run's.
 

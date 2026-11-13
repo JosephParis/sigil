@@ -4,7 +4,7 @@ title: "Verify /api/stats and /admin work against production before inviting any
 priority: P2
 area: product
 effort: S
-status: open
+status: done
 ---
 
 ## Problem
@@ -44,13 +44,13 @@ End-to-end, against the deployed URL:
 
 - [x] Play one real run to completion. Confirm it appears in `runs`. -- five
       guest Daily runs, 2026-11-11, read back through the daily board
-- [ ] `/admin` accepts `ADMIN_TOKEN` via `TokenGate` and renders. All 19
+- [x] `/admin` accepts `ADMIN_TOKEN` via `TokenGate` and renders. All 19
       aggregations in `api/stats.js` return without error on a near-empty
       dataset — several are prone to divide-by-zero or null-band edge cases when
       `n` is tiny, and that is exactly the state on day one.
-- [ ] `VersionRange` From/To picker filters correctly across `VERSION_HISTORY`
-- [ ] Band verdicts render (`src/admin/bands.js` against `WINRATE_TARGETS.md`)
-- [ ] Submit feedback from the live site; confirm it appears in the admin feedback view
+- [x] `VersionRange` From/To picker filters correctly across `VERSION_HISTORY`
+- [x] Band verdicts render (`src/admin/bands.js` against `WINRATE_TARGETS.md`)
+- [x] Submit feedback from the live site; confirm it appears in the admin feedback view
 - [ ] Play one run with Dev tools; confirm it is `dev: true` and **excluded** from stats
 - [ ] Win a run without ever opening Settings. Confirm it appears on the
       leaderboard under the **assigned** name (e.g. `Ashen Vagrant 47`), not as
@@ -93,7 +93,7 @@ End-to-end, against the deployed URL:
       `vercel crons run` at 2026-11-13 10:25 UTC, and the request log shows
       `GET /api/cron-backfill-runs` answered **200**. (In Git Bash the path
       needs `MSYS_NO_PATHCONV=1`, or it is rewritten to a Windows path.)
-- [ ] Sign in on a second device; confirm history merges both ways (and see issue 09)
+- [x] Sign in on a second device; confirm history merges both ways (and see issue 09)
 
 Carried over from issue 04 (markup and assets are tested, but no scraper or real
 device was involved):
@@ -138,7 +138,7 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
       proves both are set.
 - [x] `/api/stats` returns 401 unauthenticated
 
-- [ ] A **signed-in** player's run reaches `runs` — i.e. `historyStore` is sending
+- [x] A **signed-in** player's run reaches `runs` — i.e. `historyStore` is sending
       `Authorization` and is not being 401'd. This is the regression to watch: a
       broken token path would silently stop recording every signed-in run.
       **Only a real signed-in run can check this.** A synthetic probe cannot:
@@ -148,7 +148,7 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
       to the production table if the gate were broken. `mayWriteAs` itself has 7
       unit tests; what is untested is only the deployed wiring.
 - [x] A **guest** run still reaches `runs` with no token -- 2026-11-11
-- [ ] Signed-in and guest feedback both still submit
+- [x] Signed-in and guest feedback both still submit
 - [x] A hand-rolled POST to `/api/runs` claiming someone else's `accountId` is
       rejected with 401 -- `401 account_not_authenticated` with no token and
       with a forged one, 2026-11-11 (the probe was `dev: true`, so it could
@@ -160,12 +160,12 @@ Auth wiring confirmed on the deployment 2026-08-06, both halves:
       real request:
   - [x] `/api/moderation` returns 401 without the token and 401 with a wrong one
         -- verified 2026-10-05
-  - [ ] The Moderation panel on `/admin` opens and lists published handles
-  - [ ] Block a test account; confirm its rows leave the public board and that
+  - [x] The Moderation panel on `/admin` opens and lists published handles
+  - [x] Block a test account; confirm its rows leave the public board and that
         the ranking has no gap where they were
-  - [ ] Unblock it; confirm the rows come back and the save was untouched
-  - [ ] Delete one run row; confirm it is gone from the board and from `runs`
-  - [ ] Delete one feedback note from the admin feedback view
+  - [x] Unblock it; confirm the rows come back and the save was untouched
+  - [x] Delete one run row; confirm it is gone from the board and from `runs`
+  - [x] Delete one feedback note from the admin feedback view
   - [ ] Confirm `blocked_accounts` was created on the first call rather than
         500ing on a missing relation
   - [ ] Post a run with a screened handle by hand; confirm it is stored with a
@@ -279,9 +279,41 @@ project, dated 2026-08-27.
 ## Acceptance criteria
 
 - [ ] Every checklist item above verified against production, not preview
-- [ ] A screenshot or note recording that `/admin` rendered correctly with real data
+- [x] A screenshot or note recording that `/admin` rendered correctly with real data
 - [x] Explicit decision on whether batch 1 is qualitative or a balance measurement
       -- qualitative, see the decision section
+
+## Closed by Joey, 2026-11-13
+
+Joey worked the remaining checks from a checklist page whose ticks Claude read
+back, then called the issue done with what was left judged not necessary for
+the first batch. Ticked above on his say-so:
+
+- `/admin` with the real token: every panel loads, the From/To picker changes
+  the numbers, the band verdicts show, feedback appears in its view, and a
+  full-page screenshot of `/admin` with real data was taken (1337 runs, 7% winrate).
+- Moderation: the panel lists published handles; Claude's three guest test
+  rows on the 2026-11-11 Daily board and its test feedback note were deleted
+  (the board's API answered empty afterwards). Block and unblock were done on
+  Joey's own signed-in account, since guest rows cannot be blocked (they share
+  the account id `guest`; the panel offers only Delete for them).
+- Signed in with Google: a run reached the server, feedback sent, and history
+  merged across two devices.
+- The weekly cron answered 200 when triggered (box above).
+
+Joey's note on deleting: after a delete, reopening the board kept showing the
+deleted rows for a while. That is the edge cache (`s-maxage=60`,
+`stale-while-revalidate=300`), which a delete does not purge; issue 45 busts
+it only for the player whose run was confirmed. Harmless for moderation, as
+the rows go within minutes, so left as is.
+
+Left unverified, by Joey's call: every win-dependent box (assigned name, own
+name, Anonymous, both renames, two guests with one name, a Daily win off the
+main board, the 60s floor with real wins), the Dev tools run, the Discord
+card, *Add to Home screen* on a phone, PostHog person profiles, the
+`blocked_accounts` and `rate_limits` table checks and the screened-handle
+post. The unit and e2e suites cover their logic; what is untested is the
+deployed path. Worth a look if the first batch reports something odd there.
 
 ## Decision: batch 1 is qualitative (2026-10-05)
 
